@@ -1282,6 +1282,16 @@ class Game {
     addFacility(facility) {
         this.facilities.push(facility);
         facility.render();
+        this.updateFacilityDensity();
+    }
+
+    // 시설이 많아지면 모바일에서 작게 보이도록 화면 밀도 단계를 정한다.
+    updateFacilityDensity() {
+        const perZone = { male: 0, female: 0 };
+        this.facilities.forEach(f => { perZone[f.gender] = (perZone[f.gender] || 0) + 1; });
+        const max = Math.max(perZone.male, perZone.female);
+        document.body.classList.toggle('dense-2', max >= 7);
+        document.body.classList.toggle('dense-3', max >= 10);
     }
 
     spawnCustomer() {
