@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>급해! 토일렛 매니저 (Panic! Toilet Manager)</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="arcade.css">
+    <meta name="theme-color" content="#b6a0ff">
+</head>
+<body>
+    <div id="game-wrapper">
+        <div id="item-bar">
+        <a href="../../index.html" class="item-btn" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; color:inherit;" title="게임 목록으로 돌아가기">🏠 아케이드 홈</a>
+        <button id="item-air-freshener" class="item-btn" title="방향제: 모든 손님 인내심 회복">
+            <span class="icon">✨</span> 방향제
+            <div class="cooldown-overlay" id="item-cooldown"></div>
+        </button>
+        <button id="mute-btn" class="item-btn" title="소리가 시끄러우면 눌러주세요">🔊</button>
+        <button id="pause-btn" class="item-btn">일시정지 (P)</button>
+    </div>
+
+    <div id="notification">LEVEL UP!</div>
+        <header>
+            <div class="stat-box">
+                <span class="label">LEVEL</span>
+                <span id="level-val" class="value">1</span>
+            </div>
+            <div class="stat-box">
+                <span class="label" id="best-label">최고 기록</span>
+                <span id="best-val" class="value">0</span>
+            </div>
+            <div class="stat-box life-box" id="life-box">
+                <span class="label">LIFE</span>
+                <span id="life-val" class="life-value">♥♥♥</span>
+            </div>
+            <div class="stat-box timer-box hidden" id="timer-box">
+                <span class="label">TIME</span>
+                <span id="time-val" class="timer-value">60</span>
+            </div>
+            <div class="main-title">
+                <h1>급해! <span>토일렛 매니저</span></h1>
+                <div id="combo-container" class="combo-hide">COMBO <span id="combo-val">0</span></div>
+            </div>
+            <div class="stat-box">
+                <span class="label">SCORE</span>
+                <span id="score-val" class="value">0</span>
+            </div>
+        </header>
+
+        <div id="level-progress-container">
+            <div class="progress-label" id="progress-label">LEVEL PROGRESS</div>
+            <div class="progress-track">
+                <div id="level-progress-fill"></div>
+            </div>
+            <div id="level-progress-text">0 / 5</div>
+            <div class="progress-label pressure-label">PRESSURE</div>
+            <div class="progress-track pressure-track">
+                <div id="pressure-fill"></div>
+            </div>
+        </div>
+
+        <div id="play-guide" role="status" aria-live="polite">손님을 끌어 옮기거나, 손님을 누른 뒤 시설을 눌러 안내하세요.</div>
+        <section id="practice-panel" class="hidden" aria-label="조작 실습">
+            <strong id="practice-title">조작 연습</strong>
+            <p id="practice-instruction" role="status" aria-live="polite"></p>
+            <button id="practice-skip-btn" class="secondary-btn">건너뛰고 일반 모드 시작</button>
+        </section>
+        <main id="game-container">
+            <!-- 대기 구역 -->
+            <section id="waiting-area">
+                <div class="area-header">손님 대기실 <span>끌거나 눌러서 안내 ↗</span></div>
+                <div id="customer-queue" class="queue-container"></div>
+            </section>
+
+            <!-- 화장실 구역 -->
+            <section id="toilet-world">
+                <!-- 남자 화장실 -->
+                <div id="male-bathroom" class="bathroom-zone">
+                    <div class="zone-label male">♂ 남자 화장실 <span>MEN</span></div>
+                    <div class="facilities">
+                        <div class="facility-group" id="male-urinals">
+                            <!-- 소변기들 -->
+                        </div>
+                        <div class="facility-group" id="male-stalls">
+                            <!-- 대변기들 -->
+                        </div>
+                        <div class="facility-group" id="male-sinks">
+                            <!-- 남자 세면대 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 여자 화장실 -->
+                <div id="female-bathroom" class="bathroom-zone">
+                    <div class="zone-label female">♀ 여자 화장실 <span>WOMEN</span></div>
+                    <div class="facilities">
+                        <div class="facility-group" id="female-stalls">
+                            <!-- 대변기들 -->
+                        </div>
+                        <div class="facility-group" id="female-vanity">
+                            <!-- 파우더룸 -->
+                        </div>
+                        <div class="facility-group" id="female-sinks">
+                            <!-- 여자 세면대 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 공용 세면대 제거됨 -->
+            </section>
+        </main>
+
+        <!-- 레벨 클리어 모달 -->
+        <div id="clear-overlay" class="hidden">
+            <div class="modal clear-modal">
+                <h2 id="clear-title">LEVEL CLEAR!</h2>
+                <p id="campaign-summary" class="campaign-summary hidden"></p>
+                <div class="star-rating" id="star-rating">
+                    <span class="star">⭐</span>
+                    <span class="star">⭐</span>
+                    <span class="star">⭐</span>
+                </div>
+                <div class="clear-stats">
+                    <p>처리한 손님: <span id="clear-customers">0</span></p>
+                    <p>이번 레벨 점수: <span id="clear-score">0</span></p>
+                </div>
+                <p class="rating-guide">놓친 손님 0명: 별 3개 · 1~2명: 별 2개 · 3명 이상: 별 1개<br>긴급한 손님도 무사히 안내하면 괜찮아요!</p>
+                <div id="upgrade-shop" class="upgrade-shop"></div>
+                <p id="campaign-hint" class="rating-guide hidden">10레벨을 모두 완료했습니다! 보상을 골라 11레벨부터 무한 모드로 이어가거나, 시작 화면으로 돌아갈 수 있어요.<br>무한 모드는 현재 점수·하트·업그레이드를 이어받으며 최고 기록을 따로 저장합니다.</p>
+                <button id="next-level-btn">다음 레벨로</button>
+                <button id="campaign-retry-btn" class="secondary-btn hidden">다시 도전 · 시작 화면</button>
+            </div>
+        </div>
+
+        <!-- 오버레이 메세지 -->
+        <div id="overlay">
+            <div class="modal title-modal">
+                <div class="title-copy">
+                    <div class="arcade-kicker">SLSF ARCADE CLUB <span>01</span></div>
+                    <h2 id="modal-title"><span class="title-shout">급해!</span><br>토일렛 매니저</h2>
+                    <p id="modal-desc" class="modal-highlight">줄은 길고, 인내심은 짧다!<br>손님을 안내하고 화장실의 평화를 지켜주세요.</p>
+                    <div class="title-instructions"><span>01 끌어서 배치</span><span>02 틈틈이 청소</span><span>03 콤보 도전</span></div>
+                </div>
+                <div class="title-art" aria-hidden="true">
+                    <div class="art-sticker">오늘도 만석!</div>
+                    <img src="assets/arcade/title-scene.svg" width="470" height="390" alt="">
+                    <span class="art-caption">작은 화장실, 엄청난 대소동.</span>
+                </div>
+                <div class="button-group">
+                    <button id="start-btn" class="arcade-play normal-mode-btn" aria-label="일반 모드">
+                        <span class="mode-icon" aria-hidden="true">▶</span><span>일반 모드<small>나만의 화장실 운영 도전</small></span><span class="button-arrow" aria-hidden="true">↗</span>
+                    </button>
+                    <button id="time-attack-btn" class="arcade-play time-attack-mode-btn" aria-label="타임어택">
+                        <span class="mode-icon" aria-hidden="true">⌁</span><span>타임어택<small>60초! 최고 점수에 도전</small></span><span class="button-arrow" aria-hidden="true">↗</span>
+                    </button>
+                    <button id="back-btn" class="secondary-btn hidden">뒤로가기</button>
+                </div>
+
+                <div class="title-secondary-row">
+                    <button id="help-btn" class="secondary-btn small-btn" aria-label="도움말">? 게임 방법</button>
+                    <button id="daily-challenge-btn" class="secondary-btn small-btn">
+                        🗓️ 오늘의 챌린지
+                        <span id="daily-challenge-badge" class="challenge-badge"></span>
+                    </button>
+                    <button id="achievements-btn" class="secondary-btn small-btn">🏅 업적</button>
+                    <button id="theme-btn" class="secondary-btn small-btn">🎪 테마 맵</button>
+                </div>
+
+                <button id="practice-btn" class="secondary-btn small-btn practice-start">처음이라면? 압박 없이 조작 연습 →</button>
+                <div class="developer-tag"><span>DRAG. CLEAN. REPEAT.</span><span>만든 곳 <b>SLSF</b></span></div>
+            </div>
+        </div>
+
+        <div id="help-overlay" class="hidden">
+            <div class="modal help-modal">
+                <h2>게임 방법</h2>
+                <div id="tutorial-content" class="tutorial-box">
+                    <p>🚽 <b>배치:</b> 손님을 끌어 옮기거나, 손님을 한 번 누른 뒤 초록색으로 강조된 시설을 누르세요. 키보드는 Tab으로 이동하고 Enter 또는 Space로 선택합니다. Esc를 누르거나 같은 손님을 다시 누르면 선택이 취소됩니다.</p>
+                    <p>❤️ <b>생명:</b> 손님을 놓쳐도 바로 끝나지 않습니다. 하트가 1개 줄고, 하트 3개를 모두 잃으면 게임 오버입니다.</p>
+                    <p>🏆 <b>완주:</b> 일반 모드와 테마 맵은 10레벨을 마치면 완주합니다. 최종 성적과 전용 업적을 확인한 뒤, 보상을 골라 11레벨부터 무한 모드로 이어갈 수 있어요. 무한 모드는 완주 점수부터 이어서 별도 최고 기록으로 저장합니다.</p>
+                    <p>⏱️ <b>타임어택:</b> 60초 동안 최대 점수를 노립니다. 첫 손님은 약 1초 뒤, 이후 약 2.2초 간격으로 등장하며 여자 대변칸이 하나 더 제공됩니다. 손님을 놓치면 시간이 5초 줄고 100점이 깎입니다.</p>
+                    <p>🚨 <b>위기:</b> 빨간 얼굴/긴급 표시가 뜨면 인내심이 거의 끝난 상태입니다. 욕구 아이콘에 맞는 시설로 가장 먼저 옮기세요.</p>
+                    <p>🎭 <b>특수 손님:</b> 
+                        <br>• 👑 <b>VIP:</b> 3배 점수! 하지만 인내심이 조금 빨리 깎입니다.
+                        <br>• 👶 <b>어린이:</b> 인내심이 <b>매우 빨리</b> 깎이니 최우선으로!
+                        <br>• 🍺 <b>취객:</b> 휘청거려 배치를 <b>실수</b>할 수 있으니 주의!
+                        <br>• 💼 <b>직장인:</b> 성급하지만 높은 점수를 줍니다.
+                        <br>• 🧼 <b>깔끔쟁이:</b> 손 씻기와 화장 수요가 많습니다.
+                        <br>• 🧾 <b>단골:</b> 콤보 유지 시간이 조금 길어집니다.
+                        <br>• 💢 <b>진상:</b> 대기 중인 다른 손님까지 불안하게 만듭니다.
+                    </p>
+                    <p>🛒 <b>업그레이드:</b> 레벨을 클리어하면 3개 중 하나를 골라 다음 레벨을 유리하게 시작합니다.</p>
+                    <p>🧹 <b>청소부 NPC:</b> 업그레이드로 청소부를 고용하면, 가장 가까운 오염 시설을 알아서 찾아가 자동으로 청소해줍니다. (한 번에 한 시설만!)</p>
+                    <p>⚡ <b>이벤트 예고:</b> 러시 아워, 청소 경보, VIP 투어는 시작 전 짧게 경고가 뜹니다.</p>
+                    <p>🧹 <b>청소:</b> 시설이 오염되면(⚠️) 클릭하여 청소하세요.</p>
+                    <p>✨ <b>아이템:</b> '방향제'는 모든 손님의 인내심을 회복시킵니다.</p>
+                    <p>🗓️ <b>오늘의 챌린지:</b> 매일 다른 특별 조건의 60초 도전! 같은 날짜에는 손님·욕구·이벤트 순서와 오염 시도가 같아집니다. 사용 중인 시설의 오염은 건너뛰며, 실수하면 시간이 줄어듭니다. 오늘의 최고 기록에 도전해보세요!</p>
+                    <p>🏅 <b>업적:</b> 특별한 조건을 달성하면 업적이 열립니다. 타이틀 화면의 '업적' 버튼에서 확인할 수 있어요.</p>
+                    <p>🎪 <b>테마 맵:</b> 🪩 클럽 화장실처럼 특별한 조건이 붙은 화장실에서 플레이할 수 있어요. 타이틀 화면의 '테마 맵' 버튼에서 골라보세요!</p>
+                </div>
+                <button id="close-help-btn" class="secondary-btn">닫기</button>
+            </div>
+        </div>
+
+        <div id="achievements-overlay" class="hidden">
+            <div class="modal achievements-modal">
+                <h2>🏅 업적</h2>
+                <div id="achievements-progress" class="achievements-progress">0 / 10 달성</div>
+                <div id="achievements-content" class="achievements-grid"></div>
+                <button id="close-achievements-btn" class="secondary-btn">닫기</button>
+            </div>
+        </div>
+
+        <div id="theme-overlay" class="hidden">
+            <div class="modal theme-modal">
+                <h2>🎪 테마 맵</h2>
+                <p class="theme-modal-desc">일반 모드에 특별한 조건을 더한 화장실에서 플레이해보세요!</p>
+                <div id="theme-content" class="theme-grid"></div>
+                <button id="close-theme-btn" class="secondary-btn">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

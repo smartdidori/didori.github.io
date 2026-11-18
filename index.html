@@ -3,19 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Didori | Portfolio</title>
+  <title>Didori Arcade | 캐주얼 미니게임 천국</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0f172a;
-      --card-bg: rgba(30, 41, 59, 0.7);
+      --bg: #0b0f19;
+      --card-bg: rgba(18, 24, 38, 0.85);
       --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover-border: rgba(99, 102, 241, 0.5);
       --text-main: #f8fafc;
       --text-sub: #94a3b8;
-      --accent: #38bdf8;
-      --accent-gradient: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+      --accent: #6366f1;
+      --accent-gradient: linear-gradient(135deg, #a855f7 0%, #6366f1 50%, #38bdf8 100%);
+      --badge-hot: #ef4444;
+      --badge-new: #10b981;
     }
 
     * {
@@ -31,194 +34,406 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem 1rem;
       background-image: 
-        radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(192, 132, 252, 0.15) 0px, transparent 50%);
+        radial-gradient(at 15% 15%, rgba(99, 102, 241, 0.18) 0px, transparent 45%),
+        radial-gradient(at 85% 80%, rgba(168, 85, 247, 0.15) 0px, transparent 45%);
+      background-attachment: fixed;
     }
 
-    .container {
-      width: 100%;
-      max-width: 680px;
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-
-    .card {
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 2.5rem 2rem;
-      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+    header {
+      padding: 3.5rem 1.5rem 2rem;
       text-align: center;
+      max-width: 900px;
+      margin: 0 auto;
     }
 
-    .badge {
+    .brand-tag {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.35rem 0.85rem;
-      background: rgba(56, 189, 248, 0.1);
-      border: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 0.35rem 0.9rem;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.3);
       border-radius: 9999px;
-      color: var(--accent);
+      color: #818cf8;
       font-size: 0.875rem;
       font-weight: 600;
       margin-bottom: 1.25rem;
+      letter-spacing: -0.01em;
     }
 
-    .badge-dot {
+    .pulse-dot {
       width: 8px;
       height: 8px;
       background-color: #22c55e;
       border-radius: 50%;
+      box-shadow: 0 0 10px #22c55e;
       animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
 
     @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
     }
 
     h1 {
-      font-size: 2.25rem;
-      font-weight: 800;
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      font-weight: 900;
       line-height: 1.2;
-      margin-bottom: 0.75rem;
+      margin-bottom: 1rem;
       background: var(--accent-gradient);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      letter-spacing: -0.03em;
     }
 
-    .desc {
-      font-size: 1.05rem;
+    .subtitle {
+      font-size: 1.15rem;
       color: var(--text-sub);
       line-height: 1.6;
-      margin-bottom: 2rem;
+      max-width: 600px;
+      margin: 0 auto 2rem;
+      word-break: keep-all;
     }
 
-    .features {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem;
-      margin-bottom: 2rem;
-      text-align: left;
-    }
-
-    .feature-item {
-      background: rgba(15, 23, 42, 0.5);
+    .stats-bar {
+      display: inline-flex;
+      gap: 1.5rem;
+      padding: 0.6rem 1.5rem;
+      background: rgba(30, 41, 59, 0.5);
       border: 1px solid var(--card-border);
       border-radius: 12px;
-      padding: 1rem;
-    }
-
-    .feature-item h3 {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #e2e8f0;
-      margin-bottom: 0.25rem;
-    }
-
-    .feature-item p {
-      font-size: 0.825rem;
+      backdrop-filter: blur(8px);
+      font-size: 0.875rem;
       color: var(--text-sub);
-      line-height: 1.4;
     }
 
-    .button-group {
+    .stats-bar strong {
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    main {
+      flex: 1;
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem 1.5rem 4rem;
+    }
+
+    .section-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
       display: flex;
-      gap: 0.75rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1.4rem;
-      border-radius: 10px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      text-decoration: none;
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #0f172a;
-    }
-
-    .btn-primary:hover {
-      background: #7dd3fc;
-      transform: translateY(-2px);
-    }
-
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.05);
+      gap: 0.6rem;
       color: #e2e8f0;
-      border: 1px solid var(--card-border);
     }
 
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.1);
-      transform: translateY(-2px);
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.75rem;
+    }
+
+    .game-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+    }
+
+    .game-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--card-hover-border);
+      box-shadow: 0 20px 40px -15px rgba(99, 102, 241, 0.3);
+    }
+
+    .card-thumb {
+      position: relative;
+      width: 100%;
+      height: 200px;
+      background: #1e293b;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+
+    .game-card:hover .card-thumb img {
+      transform: scale(1.05);
+    }
+
+    .badge-wrap {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      display: flex;
+      gap: 0.4rem;
+      z-index: 2;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .badge-primary {
+      background: #ef4444;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+    }
+
+    .badge-category {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(6px);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .card-body {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: #ffffff;
+    }
+
+    .card-desc {
+      font-size: 0.925rem;
+      color: var(--text-sub);
+      line-height: 1.55;
+      margin-bottom: 1.25rem;
+      flex: 1;
+      word-break: keep-all;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .tag-item {
+      font-size: 0.78rem;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 0.25rem 0.55rem;
+      border-radius: 6px;
+      color: #cbd5e1;
+    }
+
+    .play-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.85rem 1rem;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1rem;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+    }
+
+    .play-btn:hover {
+      background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+      transform: translateY(-1px);
+    }
+
+    /* Coming Soon Card */
+    .game-card.coming-soon {
+      border: 2px dashed rgba(255, 255, 255, 0.12);
+      background: rgba(18, 24, 38, 0.4);
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      min-height: 380px;
+      padding: 2.5rem 1.5rem;
+    }
+
+    .game-card.coming-soon:hover {
+      transform: none;
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow: none;
+    }
+
+    .soon-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.8;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .soon-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #e2e8f0;
+      margin-bottom: 0.5rem;
+    }
+
+    .soon-desc {
+      font-size: 0.9rem;
+      color: #64748b;
+      line-height: 1.5;
+      max-width: 240px;
+      margin-bottom: 1.5rem;
+      word-break: keep-all;
+    }
+
+    .soon-badge {
+      font-size: 0.8rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #94a3b8;
+      border: 1px solid var(--card-border);
     }
 
     footer {
+      border-top: 1px solid var(--card-border);
+      padding: 2.5rem 1.5rem;
       text-align: center;
-      font-size: 0.85rem;
       color: #64748b;
+      font-size: 0.875rem;
+      background: rgba(11, 15, 25, 0.8);
+    }
+
+    footer a {
+      color: #94a3b8;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    footer a:hover {
+      color: var(--accent);
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1rem;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <div class="badge">
-        <span class="badge-dot"></span>
-        GitHub Pages 배포 준비 완료
-      </div>
-      <h1>Hello, World!</h1>
-      <p class="desc">
-        <strong>didori.github.io</strong>에 오신 것을 환영합니다.<br>
-        포트폴리오 웹사이트를 위한 테스트 인덱스 페이지가 정상 작동 중입니다.
-      </p>
 
-      <div class="features">
-        <div class="feature-item">
-          <h3>🚀 빠른 배포</h3>
-          <p>GitHub Pages와 연동되어 정적 파일이 즉시 서비스됩니다.</p>
-        </div>
-        <div class="feature-item">
-          <h3>📱 반응형 디자인</h3>
-          <p>모바일, 태블릿, 데스크톱 모든 기기에 최적화되었습니다.</p>
-        </div>
-        <div class="feature-item">
-          <h3>🎨 커스텀 가능</h3>
-          <p>HTML/CSS 기반으로 자유롭게 포트폴리오를 확장할 수 있습니다.</p>
-        </div>
-      </div>
+  <header>
+    <div class="brand-tag">
+      <span class="pulse-dot"></span>
+      Didori Arcade Zone
+    </div>
+    <h1>캐주얼 미니게임 아케이드</h1>
+    <p class="subtitle">
+      설치 없이 브라우저에서 바로 즐기는 가볍고 중독성 있는 캐주얼 웹 게임 모음입니다.
+    </p>
+    <div class="stats-bar">
+      <span>플레이 가능 게임: <strong>1개</strong></span>
+      <span>•</span>
+      <span>플랫폼: <strong>Web / Mobile</strong></span>
+      <span>•</span>
+      <span>지속 업데이트 예정</span>
+    </div>
+  </header>
 
-      <div class="button-group">
-        <a href="https://github.com/smartdidori" target="_blank" class="btn btn-primary">
-          GitHub 프로필 방문
-        </a>
-        <a href="https://github.com/smartdidori/didori.github.io" target="_blank" class="btn btn-secondary">
-          리포지토리 보기
-        </a>
-      </div>
+  <main>
+    <div class="section-title">
+      <span>🕹️</span> 전체 게임 목록
     </div>
 
-    <footer>
-      &copy; 2026 Didori. Powered by GitHub Pages.
-    </footer>
-  </div>
+    <div class="games-grid">
+
+      <!-- Game 1: 급해! 토일렛 매니저 -->
+      <article class="game-card">
+        <div class="card-thumb">
+          <div class="badge-wrap">
+            <span class="badge badge-primary">HOT</span>
+            <span class="badge badge-category">아케이드</span>
+          </div>
+          <img src="games/toilet-game/previews/arcade-assets.png" alt="급해! 토일렛 매니저 미리보기" onerror="this.onerror=null; this.src='games/toilet-game/assets/images/nomal_mode.png';">
+        </div>
+        <div class="card-body">
+          <h2 class="card-title">급해! 토일렛 매니저</h2>
+          <p class="card-desc">
+            급박한 손님들이 몰려온다! 화장실 칸이 비는 즉시 신속하게 손님을 안내하고, 방향제 아이템과 콤보를 활용해 대참사를 막아내는 긴장감 넘치는 매니지먼트 아케이드!
+          </p>
+          <div class="card-tags">
+            <span class="tag-item">⏱️ 타임어택</span>
+            <span class="tag-item">👥 손님 관리</span>
+            <span class="tag-item">🔊 BGM/효과음</span>
+            <span class="tag-item">🏆 콤보/랭킹</span>
+          </div>
+          <a href="games/toilet-game/" class="play-btn">
+            게임 시작하기 🎮
+          </a>
+        </div>
+      </article>
+
+      <!-- Coming Soon 1 -->
+      <article class="game-card coming-soon">
+        <div class="soon-icon">🚀</div>
+        <h3 class="soon-title">신작 미니게임 2탄</h3>
+        <p class="soon-desc">
+          더 신나고 다양한 장르의 캐주얼 게임이 개발 중입니다. 곧 만나보실 수 있습니다!
+        </p>
+        <span class="soon-badge">Coming Soon</span>
+      </article>
+
+      <!-- Coming Soon 2 -->
+      <article class="game-card coming-soon">
+        <div class="soon-icon">🧩</div>
+        <h3 class="soon-title">퍼즐 & 두뇌 게임</h3>
+        <p class="soon-desc">
+          심플하지만 깊이 있는 퍼즐 미니게임을 준비하고 있습니다.
+        </p>
+        <span class="soon-badge">Coming Soon</span>
+      </article>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-links">
+      <a href="https://github.com/smartdidori" target="_blank">GitHub Profile</a>
+      <a href="https://github.com/smartdidori/didori.github.io" target="_blank">GitHub Repository</a>
+    </div>
+    <p>&copy; 2026 Didori. All rights reserved. Created with Antigravity.</p>
+  </footer>
+
 </body>
 </html>
