@@ -88,7 +88,7 @@ h1 { font-size: 24px; letter-spacing: -.055em; }
 .room-info { margin-bottom: 7px; padding: 7px 8px; background: #f0eaff; border-radius: 10px; }
 .room-header { justify-content: space-between; gap: 4px; font-size: 12px; }
 .room-header button { min-height: 28px; white-space: nowrap; }
-.room-steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 5px 0; }
+.room-steps { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); margin: 5px 0; }
 .room-button { padding-inline: 2px; }
 .room-button[data-complete="true"]:not([aria-current="step"]) { background: #e1f6e9; color: #205b48; }
 .room-info p { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
@@ -299,3 +299,16 @@ canvas { display: block; width: 100%; height: auto; aspect-ratio: 360 / 446; tou
   .actions button { padding: 0 6px; gap: 3px; }
   .stat-icon { width: 24px; height: 24px; }
 }
+
+.room-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.room-tools > :not([hidden]) { margin-top: 6px; }
+#lantern { padding: 4px 8px; min-height: 32px; border: 1px solid #dbc393; border-radius: 8px; color: #68442c; background: #fff4d7; font: inherit; font-size: 12px; font-weight: 700; }
+#bell-progress { font-size: 12px; font-weight: 700; color: #563782; }
+
+.mode-picker { flex-wrap: wrap; }
+.daily-info { display: flex; justify-content: space-between; margin-bottom: 7px; padding: 7px 8px; border-radius: 8px; background: #ede5ff; font-size: 12px; color: #513685; }
+.result-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin: 7px 0; }
+.result-grid div { border-radius: 7px; background: #f2ecff; padding: 5px; }
+.result-grid dt { font-size: 10px; color: var(--muted); }
+.result-grid dd { margin: 2px 0 0; font-size: 13px; font-weight: 750; overflow-wrap: anywhere; }
+#save-result { min-height: 34px; margin-bottom: 7px; background: #eee5ff; color: #513685; }

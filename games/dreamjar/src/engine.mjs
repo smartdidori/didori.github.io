@@ -33,10 +33,15 @@ function seededRandom(seed) {
 }
 
 export class DreamJar {
-  constructor(seed, onEvent = () => {}, { timed = true, tiltLimit = MAX_TILT, dropBudget = Infinity } = {}) {
+  constructor(seed, onEvent = () => {}, { timed = true, tiltLimit = MAX_TILT, dropBudget = Infinity, fogCover = null, lanterns = 0, lanternSeconds = 10 } = {}) {
     this.timed = timed;
     this.tiltLimit = tiltLimit;
     this.dropBudget = dropBudget;
+    this.fogCover = fogCover;
+    this.lanterns = lanterns;
+    this.lanternSeconds = lanternSeconds;
+    this.lanternTicks = 0;
+    this.lanternsUsed = 0;
     this.seed = seed >>> 0;
     this.random = seededRandom(this.seed);
     this.onEvent = onEvent;
@@ -115,7 +120,16 @@ export class DreamJar {
   }
 
   get fogTop() {
-    return FLOOR - (FLOOR - DANGER) * Math.min(0.45, 0.25 + this.dawns * 0.05);
+    const cover = this.fogCover ?? Math.min(0.45, 0.25 + this.dawns * 0.05);
+    return FLOOR - (FLOOR - DANGER) * cover;
+  }
+
+  activateLantern() {
+    if (this.phase !== 'playing' || this.lanterns === 0 || this.lanternTicks > 0) return false;
+    this.lanterns--;
+    this.lanternsUsed++;
+    this.lanternTicks = Math.round(this.lanternSeconds / STEP);
+    return true;
   }
 
   drop(x, automatic = false) {
@@ -172,6 +186,7 @@ export class DreamJar {
       if (this.transition <= 0) this.phase = 'playing';
       return;
     }
+    if (this.lanternTicks > 0) this.lanternTicks--;
     this.updateTilt();
     const readyAtStart = this.cooldown <= 0;
     this.cooldown = Math.max(0, this.cooldown - STEP);

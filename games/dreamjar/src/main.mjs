@@ -4,7 +4,9 @@ import { ROOMS, createRoom, isRoomComplete, roomGoalZone } from './rooms.mjs';
 
 import { THEMES, DAWN_LETTERS, readCollection, collectGameEvent, selectTheme } from './collection.mjs';
 
-const BUILD = '0.1.0-dev.8';
+import { DAILY_LIMIT, seoulDay, dailySeed, readDaily, useDailyAttempt, finishDaily } from './daily.mjs';
+
+const BUILD = '0.1.0-dev.10';
 const get = id => document.getElementById(id);
 const board = get('board');
 const collectionDialog = get('collection-dialog');
@@ -21,6 +23,12 @@ const laneIndicators = [0, 1, 2].map(index => {
 const query = new URLSearchParams(location.search);
 const preset = query.get('qa');
 const profileKey = preset ? 'dreamjar.qa.profile.2' : 'dreamjar.profile.2';
+const dailyKey = 'dreamjar.daily';
+let dailyRecord = readDaily(null, seoulDay());
+let dailyMode = false;
+let dailySessionDay = null;
+let lastResult = null;
+let runRewards = { mongnok: 0, shards: 0, letters: 0 };
 const collectionKey = preset ? 'dreamjar.qa.collection' : 'dreamjar.collection';
 let collection = readCollection(null);
 let collectionSaved = true;
@@ -220,8 +228,14 @@ function onEvent(event) {
     clearInputs();
     playSound('dawn');
   }
-  if (roomIndex === null) updateCollection(collectGameEvent(collection, event));
-  if (roomIndex === null && event.score > best) {
+  if (roomIndex === null && !dailyMode) {
+    const next = collectGameEvent(collection, event);
+    runRewards.mongnok += next.mongnok - collection.mongnok;
+    runRewards.shards += next.discovered.length - collection.discovered.length;
+    runRewards.letters += Math.min(next.dawns, DAWN_LETTERS.length) - Math.min(collection.dawns, DAWN_LETTERS.length);
+    updateCollection(next);
+  }
+  if (roomIndex === null && !dailyMode && event.score > best) {
     best = event.score;
     try { localStorage.setItem(profileKey, String(best)); } catch { /* Continue with an in-memory score. */ }
   }
@@ -229,7 +243,7 @@ function onEvent(event) {
     clearInputs();
     playSound('end');
     if (roomIndex === null) {
-      setOverlay('꿈이 잠들었습니다', '점수 ' + event.score.toLocaleString('ko-KR') + ' · 새벽 ' + event.dawns + '회', '새 꿈 시작');
+      showRunResult(event);
     } else {
       setOverlay('다시 도전', ROOMS[roomIndex].instruction, '이 방 다시 시작');
     }
@@ -240,6 +254,8 @@ function restart() {
   clearInputs();
   paused = false;
   roomCleared = false;
+  lastResult = null;
+  runRewards = { mongnok: 0, shards: 0, letters: 0 };
   elapsed = 0;
   last = null;
   aim = (roomIndex === null ? null : ROOMS[roomIndex].aim) ?? WIDTH / 2;
@@ -248,13 +264,14 @@ function restart() {
   announcedFirstMerge = false;
   dangerSoundPlayed = false;
   const fixedSeed = seedParam !== null && /^\d+$/.test(seedParam) ? Number(seedParam) >>> 0 : null;
-  state = roomIndex === null ? new DreamJar(fixedSeed ?? (Date.now() >>> 0), onEvent) : createRoom(roomIndex, onEvent);
+  const seed = dailyMode ? dailySeed(dailySessionDay ?? dailyRecord.day) : fixedSeed ?? (Date.now() >>> 0);
+  state = roomIndex === null ? new DreamJar(seed, onEvent) : createRoom(roomIndex, onEvent);
   state.updateDropAim(aim);
-  if (roomIndex === null && preset === 'dawn') {
+  if (roomIndex === null && !dailyMode && preset === 'dawn') {
     state.addShard(7, 120, 359);
     state.addShard(7, 239, 359);
   }
-  if (roomIndex === null && preset === 'overflow') {
+  if (roomIndex === null && !dailyMode && preset === 'overflow') {
     [7, 6, 7, 6].forEach((stage, level) => state.addShard(stage, 181, 358 - 105 * level));
     state.addShard(3, 84, 362);
     state.addShard(4, 87, 290);
@@ -289,6 +306,8 @@ function clearInputs() {
 }
 
 function setOverlay(title, detail, label) {
+  get('run-result').hidden = true;
+  get('continue').disabled = false;
   get('overlay-title').textContent = title;
   get('overlay-detail').textContent = detail;
   get('continue').textContent = label;
@@ -329,8 +348,15 @@ function setShardChip(chip, spec) {
 
 function syncHud() {
   updateText('score', state.score.toLocaleString('ko-KR'));
-  updateText('best', best.toLocaleString('ko-KR'));
+  updateText('best', (dailyMode ? dailyRecord.best : best).toLocaleString('ko-KR'));
   updateText('dawns', state.dawns);
+  const lamp = get('lantern');
+  if (!lamp.hidden) {
+    const seconds = Math.ceil(state.lanternTicks * STEP);
+    lamp.disabled = !started || paused || roomCleared || state.phase !== 'playing' || state.lanterns === 0 || seconds > 0;
+    updateText('lantern-label', seconds ? '등불 ' + seconds + '초 · 남은 횟수 ' + state.lanterns : '등불 켜기 · ' + state.lanterns + '회');
+  }
+  if (!get('bell-progress').hidden) updateText('bell-progress', '종 합체 ' + state.roomProgress.bells + ' / ' + ROOMS[roomIndex].bellGoal);
   updateText('collection-balance', collection.mongnok.toLocaleString('ko-KR'));
   const outOfDrops = state.drops >= state.dropBudget;
   get('drop-queue').hidden = outOfDrops;
@@ -412,7 +438,7 @@ function drawShard(x, y, r, stage, visible = true, alpha = 1) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = 'bold ' + Math.round(r * 1.08) + 'px system-ui';
-  ctx.fillText(spec.mark, x, y + 1);
+  ctx.fillText(!visible && state.fogCover !== null ? '?' : spec.mark, x, y + 1);
   ctx.restore();
 }
 
@@ -459,27 +485,29 @@ function draw() {
     ctx.fillRect(left, FLOOR - 5, right - left, 5);
   }
   const fog = state.fogTop;
-  const haze = ctx.createLinearGradient(0, fog, 0, FLOOR);
-  haze.addColorStop(0, '#c1ace840');
-  haze.addColorStop(1, '#b4a0dc79');
-  ctx.fillStyle = haze;
-  ctx.fillRect(LEFT, fog, RIGHT - LEFT, FLOOR - fog);
   const lights = state.bodies.filter(body => SHARDS[body.stage - 1].light);
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(LEFT, fog, RIGHT - LEFT, FLOOR - fog);
-  ctx.clip();
-  for (const light of lights) {
-    const spec = SHARDS[light.stage - 1];
-    const glow = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, spec.light);
-    glow.addColorStop(0, spec.color + '62');
-    glow.addColorStop(1, spec.color + '00');
-    ctx.fillStyle = glow;
-    ctx.fillRect(light.x - spec.light, light.y - spec.light, spec.light * 2, spec.light * 2);
+  if (state.lanternTicks === 0) {
+    const haze = ctx.createLinearGradient(0, fog, 0, FLOOR);
+    haze.addColorStop(0, '#c1ace840');
+    haze.addColorStop(1, state.fogCover === null ? '#b4a0dc79' : '#987fcbab');
+    ctx.fillStyle = haze;
+    ctx.fillRect(LEFT, fog, RIGHT - LEFT, FLOOR - fog);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(LEFT, fog, RIGHT - LEFT, FLOOR - fog);
+    ctx.clip();
+    for (const light of lights) {
+      const spec = SHARDS[light.stage - 1];
+      const glow = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, spec.light);
+      glow.addColorStop(0, spec.color + '62');
+      glow.addColorStop(1, spec.color + '00');
+      ctx.fillStyle = glow;
+      ctx.fillRect(light.x - spec.light, light.y - spec.light, spec.light * 2, spec.light * 2);
+    }
+    ctx.restore();
   }
-  ctx.restore();
   for (const body of state.bodies) {
-    const visible = body.y <= fog || lights.some(light => Math.hypot(light.x - body.x, light.y - body.y) <= SHARDS[light.stage - 1].light);
+    const visible = state.lanternTicks > 0 || body.y <= fog || lights.some(light => Math.hypot(light.x - body.x, light.y - body.y) <= SHARDS[light.stage - 1].light);
     drawShard(body.x, body.y, body.r, body.stage, visible);
   }
 
@@ -762,14 +790,19 @@ const roomButtons = ROOMS.map((room, index) => {
 
 function syncRoomControls() {
   const training = roomIndex !== null;
-  get('mode-endless').setAttribute('aria-pressed', String(!training));
+  get('mode-endless').setAttribute('aria-pressed', String(!training && !dailyMode));
+  get('mode-daily').setAttribute('aria-pressed', String(dailyMode));
+  get('daily-info').hidden = !dailyMode;
+  if (dailyMode) syncDailyHud();
   get('mode-rooms').setAttribute('aria-pressed', String(training));
-  updateText('mode-label', training ? '기억의 방' : '무한 꿈');
+  updateText('mode-label', training ? '기억의 방' : dailyMode ? '오늘의 꿈' : '무한 꿈');
   get('room-info').hidden = !training;
+  get('lantern').hidden = !training || !ROOMS[roomIndex].lanterns;
+  get('bell-progress').hidden = !training || !ROOMS[roomIndex].bellGoal;
   get('drop-timer').hidden = training;
   if (!training) return;
   const room = ROOMS[roomIndex];
-  updateText('room-name', (roomIndex + 1) + '. ' + room.name + (roomIndex >= 5 ? ' · 기울기 심화' : ''));
+  updateText('room-name', (roomIndex + 1) + '. ' + room.name + (room.fog ? (roomIndex >= 21 ? ' · 복합 미션' : ' · 안개 미션') + ' · ' + Math.round(room.fog * 100) + '%' : roomIndex >= 5 ? ' · 기울기 심화' : ''));
   updateText('room-hint', room.instruction);
   for (const [index, button] of roomButtons.entries()) {
     const complete = index < roomsCompleted;
@@ -782,6 +815,8 @@ function syncRoomControls() {
 }
 
 function openMode(index) {
+  dailyMode = false;
+  dailySessionDay = null;
   roomIndex = index;
   started = true;
   void confirmSound();
@@ -804,18 +839,139 @@ function completeRoom() {
     finalRoom ? '무한 꿈 시작' : '다음 방');
 }
 
+function refreshDaily() {
+  const day = seoulDay();
+  let stored = readDaily(null, day);
+  try { stored = readDaily(localStorage.getItem(dailyKey), day); } catch { /* Keep session data in memory. */ }
+  if (dailyRecord.day === day) {
+    stored.attempts = Math.max(dailyRecord.attempts, stored.attempts);
+    stored.best = Math.max(dailyRecord.best, stored.best);
+  }
+  dailyRecord = stored;
+}
+
+function saveDaily() {
+  try { localStorage.setItem(dailyKey, JSON.stringify(dailyRecord)); } catch { /* Session limits still apply. */ }
+}
+
+function syncDailyHud() {
+  updateText('daily-date', dailySessionDay ?? dailyRecord.day);
+  updateText('daily-remaining', '남은 도전 ' + (DAILY_LIMIT - dailyRecord.attempts) + ' / ' + DAILY_LIMIT);
+}
+
+function openDaily() {
+  refreshDaily();
+  dailyMode = true;
+  dailySessionDay = null;
+  roomIndex = null;
+  started = false;
+  restart();
+  setOverlay('오늘의 꿈', '같은 날짜에는 같은 파편 순서로 도전합니다.', '오늘의 꿈 시작');
+  get('continue').disabled = dailyRecord.attempts >= DAILY_LIMIT;
+}
+
+function beginDaily() {
+  refreshDaily();
+  const next = useDailyAttempt(dailyRecord);
+  if (!next) {
+    openDaily();
+    return;
+  }
+  dailyRecord = next;
+  dailySessionDay = next.day;
+  saveDaily();
+  started = true;
+  void confirmSound();
+  restart();
+  board.focus({ preventScroll: true });
+}
+
+function showRunResult(event) {
+  if (dailyMode && dailySessionDay === seoulDay()) {
+    refreshDaily();
+    dailyRecord = finishDaily(dailyRecord, event.score);
+    saveDaily();
+    syncDailyHud();
+  }
+  const mode = dailyMode ? '오늘의 꿈' : '무한 꿈';
+  const detail = dailyMode ? dailySessionDay + ' · 오늘 최고 ' + dailyRecord.best.toLocaleString('ko-KR') : mode;
+  const values = [
+    ['점수', event.score.toLocaleString('ko-KR')],
+    ['새벽', event.dawns + '회'],
+    ['투하', event.drops + '개'],
+    ['최고 파편', SHARDS[event.highest - 1]?.name ?? '없음'],
+  ];
+  const rewards = dailyMode ? '' : '+' + runRewards.mongnok + ' 몽록 · 신규 파편 ' + runRewards.shards + ' · 새 편지 ' + runRewards.letters;
+  lastResult = { title: mode + ' 결과', detail, values, rewards };
+  setOverlay(lastResult.title, detail, dailyMode ? '다시 도전' : '새 꿈 시작');
+  get('run-result').hidden = false;
+  for (const [i, [, value]] of values.entries()) updateText('result-value-' + i, value);
+  updateText('result-reward', rewards);
+  get('result-reward').hidden = !rewards;
+  get('continue').disabled = dailyMode && dailyRecord.attempts >= DAILY_LIMIT;
+  if (get('continue').disabled) get('save-result').focus();
+}
+
+get('save-result').addEventListener('click', () => {
+  if (!lastResult) return;
+  const card = document.createElement('canvas');
+  card.width = 640;
+  card.height = 440;
+  const ink = card.getContext('2d');
+  ink.fillStyle = '#f2ecff';
+  ink.fillRect(0, 0, 640, 440);
+  ink.fillStyle = '#fff';
+  ink.fillRect(24, 24, 592, 392);
+  ink.fillStyle = '#563697';
+  ink.font = 'bold 24px system-ui';
+  ink.fillText('꿈항아리', 48, 70);
+  ink.fillStyle = '#30214b';
+  ink.font = 'bold 36px system-ui';
+  ink.fillText(lastResult.title, 48, 125);
+  ink.font = '18px system-ui';
+  ink.fillText(lastResult.detail, 48, 158);
+  for (const [i, [label, value]] of lastResult.values.entries()) {
+    const x = 48 + i % 2 * 280;
+    const y = 209 + Math.floor(i / 2) * 80;
+    ink.font = '17px system-ui';
+    ink.fillText(label, x, y);
+    ink.font = 'bold 26px system-ui';
+    ink.fillText(value, x, y + 33);
+  }
+  ink.font = '17px system-ui';
+  ink.fillText(lastResult.rewards, 48, 392);
+  const link = document.createElement('a');
+  link.download = 'dreamjar-result.png';
+  link.href = card.toDataURL('image/png');
+  link.click();
+});
+
+get('mode-daily').addEventListener('click', () => {
+  if (!dailyMode || !started || state.phase === 'ended') openDaily();
+});
+
 get('mode-endless').addEventListener('click', () => {
-  if (roomIndex !== null || !started) openMode(null);
+  if (dailyMode || roomIndex !== null || !started) openMode(null);
 });
 get('mode-rooms').addEventListener('click', () => {
   if (roomIndex === null) openMode(roomsCompleted === ROOMS.length ? 0 : roomsCompleted);
 });
 get('room-restart').addEventListener('click', () => openMode(roomIndex));
+get('lantern').addEventListener('click', () => {
+  if (canInput() && state.activateLantern()) {
+    syncHud();
+    board.focus({ preventScroll: true });
+  }
+});
 
 get('pause').addEventListener('click', togglePause);
 get('continue').addEventListener('click', () => {
   if (roomCleared) {
     openMode(roomIndex + 1 < ROOMS.length ? roomIndex + 1 : null);
+    return;
+  }
+  if (dailyMode && (!started || state.phase === 'ended')) {
+    beginDaily();
     return;
   }
   if (!started || state.phase === 'ended') void confirmSound();
@@ -860,7 +1016,7 @@ get('load-error').hidden = true;
 requestAnimationFrame(frame);
 if (preset || query.has('debug')) {
   window.dreamJarDebug = {
-    snapshot: () => ({ phase: state.phase, tick: state.tick, angle: state.angle, score: state.score, dawns: state.dawns, drops: state.drops, pressure: [...state.lanePressure], dangerLine: state.dangerLine, dropTicks: state.dropTicks, dropAim: state.dropAim, roomIndex, roomCleared, roomsCompleted, paused }),
+    snapshot: () => ({ phase: state.phase, tick: state.tick, angle: state.angle, score: state.score, dawns: state.dawns, drops: state.drops, pressure: [...state.lanePressure], dangerLine: state.dangerLine, dropTicks: state.dropTicks, dropAim: state.dropAim, roomIndex, roomCleared, roomsCompleted, lanternTicks: state.lanternTicks, lanterns: state.lanterns, dailyMode, dailyAttempts: dailyRecord.attempts, paused }),
     events: () => log.map(event => ({ ...event })),
   };
 }

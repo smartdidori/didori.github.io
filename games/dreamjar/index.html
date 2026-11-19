@@ -28,12 +28,18 @@
     <div class="mode-picker" role="group" aria-label="게임 모드 선택">
       <button id="mode-endless" type="button" aria-pressed="true">무한 꿈</button>
       <button id="mode-rooms" type="button" aria-pressed="false">기억의 방</button>
+      <button id="mode-daily" type="button" aria-pressed="false">오늘의 꿈</button>
       <button id="open-collection" type="button" aria-haspopup="dialog">수집함 <span id="collection-balance">0</span><span class="collection-unit"> 몽록</span></button>
     </div>
+    <div id="daily-info" class="daily-info" hidden><span id="daily-date"></span><strong id="daily-remaining"></strong></div>
     <section id="room-info" class="room-info" aria-label="기억의 방 목표" hidden>
       <div class="room-header"><strong id="room-name"></strong><button id="room-restart" type="button">이 방 다시 시작</button></div>
       <div class="room-steps" id="room-steps" role="group" aria-label="연습방 선택"></div>
       <p id="room-hint"></p>
+      <div class="room-tools">
+        <button id="lantern" type="button" hidden><span aria-hidden="true">☼</span> <span id="lantern-label"></span></button>
+        <span id="bell-progress" role="status" hidden></span>
+      </div>
     </section>
     <div class="stats">
       <div><span class="stat-icon violet" aria-hidden="true">✧</span><div><span>점수</span><strong id="score">0</strong></div></div>
@@ -60,6 +66,16 @@
           <span class="start-icon" aria-hidden="true">☼</span>
           <h2 id="overlay-title">무한 꿈</h2>
           <p id="overlay-detail">같은 파편을 합쳐 새벽빛을 만드세요.</p>
+          <section id="run-result" aria-label="게임 결과" hidden>
+            <dl class="result-grid">
+              <div><dt>점수</dt><dd id="result-value-0"></dd></div>
+              <div><dt>새벽</dt><dd id="result-value-1"></dd></div>
+              <div><dt>투하</dt><dd id="result-value-2"></dd></div>
+              <div><dt>최고 파편</dt><dd id="result-value-3"></dd></div>
+            </dl>
+            <p id="result-reward"></p>
+            <button id="save-result" type="button">결과 카드 저장</button>
+          </section>
           <button type="button" id="continue" disabled>게임 시작 <span aria-hidden="true">→</span></button>
           <p id="load-error" role="alert" hidden>압축을 푼 뒤 dist/dreamjar.html을 Chrome에서 열어 주세요.</p>
         </div>

@@ -96,7 +96,7 @@ h1 { font-size: 24px; letter-spacing: -.055em; }
 .room-info { margin-bottom: 7px; padding: 7px 8px; background: #f0eaff; border-radius: 10px; }
 .room-header { justify-content: space-between; gap: 4px; font-size: 12px; }
 .room-header button { min-height: 28px; white-space: nowrap; }
-.room-steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 5px 0; }
+.room-steps { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); margin: 5px 0; }
 .room-button { padding-inline: 2px; }
 .room-button[data-complete="true"]:not([aria-current="step"]) { background: #e1f6e9; color: #205b48; }
 .room-info p { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
@@ -307,6 +307,19 @@ canvas { display: block; width: 100%; height: auto; aspect-ratio: 360 / 446; tou
   .actions button { padding: 0 6px; gap: 3px; }
   .stat-icon { width: 24px; height: 24px; }
 }
+
+.room-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.room-tools > :not([hidden]) { margin-top: 6px; }
+#lantern { padding: 4px 8px; min-height: 32px; border: 1px solid #dbc393; border-radius: 8px; color: #68442c; background: #fff4d7; font: inherit; font-size: 12px; font-weight: 700; }
+#bell-progress { font-size: 12px; font-weight: 700; color: #563782; }
+
+.mode-picker { flex-wrap: wrap; }
+.daily-info { display: flex; justify-content: space-between; margin-bottom: 7px; padding: 7px 8px; border-radius: 8px; background: #ede5ff; font-size: 12px; color: #513685; }
+.result-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin: 7px 0; }
+.result-grid div { border-radius: 7px; background: #f2ecff; padding: 5px; }
+.result-grid dt { font-size: 10px; color: var(--muted); }
+.result-grid dd { margin: 2px 0 0; font-size: 13px; font-weight: 750; overflow-wrap: anywhere; }
+#save-result { min-height: 34px; margin-bottom: 7px; background: #eee5ff; color: #513685; }
 </style>
 
 </head>
@@ -325,12 +338,18 @@ canvas { display: block; width: 100%; height: auto; aspect-ratio: 360 / 446; tou
     <div class="mode-picker" role="group" aria-label="게임 모드 선택">
       <button id="mode-endless" type="button" aria-pressed="true">무한 꿈</button>
       <button id="mode-rooms" type="button" aria-pressed="false">기억의 방</button>
+      <button id="mode-daily" type="button" aria-pressed="false">오늘의 꿈</button>
       <button id="open-collection" type="button" aria-haspopup="dialog">수집함 <span id="collection-balance">0</span><span class="collection-unit"> 몽록</span></button>
     </div>
+    <div id="daily-info" class="daily-info" hidden><span id="daily-date"></span><strong id="daily-remaining"></strong></div>
     <section id="room-info" class="room-info" aria-label="기억의 방 목표" hidden>
       <div class="room-header"><strong id="room-name"></strong><button id="room-restart" type="button">이 방 다시 시작</button></div>
       <div class="room-steps" id="room-steps" role="group" aria-label="연습방 선택"></div>
       <p id="room-hint"></p>
+      <div class="room-tools">
+        <button id="lantern" type="button" hidden><span aria-hidden="true">☼</span> <span id="lantern-label"></span></button>
+        <span id="bell-progress" role="status" hidden></span>
+      </div>
     </section>
     <div class="stats">
       <div><span class="stat-icon violet" aria-hidden="true">✧</span><div><span>점수</span><strong id="score">0</strong></div></div>
@@ -357,6 +376,16 @@ canvas { display: block; width: 100%; height: auto; aspect-ratio: 360 / 446; tou
           <span class="start-icon" aria-hidden="true">☼</span>
           <h2 id="overlay-title">무한 꿈</h2>
           <p id="overlay-detail">같은 파편을 합쳐 새벽빛을 만드세요.</p>
+          <section id="run-result" aria-label="게임 결과" hidden>
+            <dl class="result-grid">
+              <div><dt>점수</dt><dd id="result-value-0"></dd></div>
+              <div><dt>새벽</dt><dd id="result-value-1"></dd></div>
+              <div><dt>투하</dt><dd id="result-value-2"></dd></div>
+              <div><dt>최고 파편</dt><dd id="result-value-3"></dd></div>
+            </dl>
+            <p id="result-reward"></p>
+            <button id="save-result" type="button">결과 카드 저장</button>
+          </section>
           <button type="button" id="continue" disabled>게임 시작 <span aria-hidden="true">→</span></button>
           <p id="load-error" role="alert" hidden>압축을 푼 뒤 dist/dreamjar.html을 Chrome에서 열어 주세요.</p>
         </div>
@@ -449,10 +478,15 @@ function seededRandom(seed) {
 }
 
 class DreamJar {
-  constructor(seed, onEvent = () => {}, { timed = true, tiltLimit = MAX_TILT, dropBudget = Infinity } = {}) {
+  constructor(seed, onEvent = () => {}, { timed = true, tiltLimit = MAX_TILT, dropBudget = Infinity, fogCover = null, lanterns = 0, lanternSeconds = 10 } = {}) {
     this.timed = timed;
     this.tiltLimit = tiltLimit;
     this.dropBudget = dropBudget;
+    this.fogCover = fogCover;
+    this.lanterns = lanterns;
+    this.lanternSeconds = lanternSeconds;
+    this.lanternTicks = 0;
+    this.lanternsUsed = 0;
     this.seed = seed >>> 0;
     this.random = seededRandom(this.seed);
     this.onEvent = onEvent;
@@ -531,7 +565,16 @@ class DreamJar {
   }
 
   get fogTop() {
-    return FLOOR - (FLOOR - DANGER) * Math.min(0.45, 0.25 + this.dawns * 0.05);
+    const cover = this.fogCover ?? Math.min(0.45, 0.25 + this.dawns * 0.05);
+    return FLOOR - (FLOOR - DANGER) * cover;
+  }
+
+  activateLantern() {
+    if (this.phase !== 'playing' || this.lanterns === 0 || this.lanternTicks > 0) return false;
+    this.lanterns--;
+    this.lanternsUsed++;
+    this.lanternTicks = Math.round(this.lanternSeconds / STEP);
+    return true;
   }
 
   drop(x, automatic = false) {
@@ -588,6 +631,7 @@ class DreamJar {
       if (this.transition <= 0) this.phase = 'playing';
       return;
     }
+    if (this.lanternTicks > 0) this.lanternTicks--;
     this.updateTilt();
     const readyAtStart = this.cooldown <= 0;
     this.cooldown = Math.max(0, this.cooldown - STEP);
@@ -733,6 +777,24 @@ const ROOMS = [
   { name: '방향 전환', instruction: '같은 구슬을 오른쪽 초록 구역에 넣은 뒤, 왼쪽 초록 구역까지 되돌리세요.', shards: [[2, 180]], zone: [265, RIGHT], returnZone: [LEFT, 95], dropBudget: 0 },
   { name: '한 번의 투하', instruction: '안내선에 유리구슬을 한 번 놓으세요. 기울여 합친 뒤 이슬을 오른쪽 초록 구역으로 굴리세요.', shards: [[2, 82]], stage: 2, aim: 241, zone: [260, RIGHT], dropBudget: 1 },
   { name: '연쇄 합체', instruction: '18° 안에서 기울여 모래알 두 개를 합치고, 새 유리구슬을 나머지 유리구슬과 합쳐 이슬을 만드세요.', shards: [[1, 78], [1, 134], [2, 240]], tiltLimit: 18, dropBudget: 0 },
+  { name: '첫 등불', instruction: '등불을 켜서 모래알의 위치를 확인한 뒤 모래알을 한 번 투하해 합치세요.', fog: 0.30, lanterns: 1, shards: [[1, 122]], dropBudget: 1 },
+  { name: '빛을 따라', instruction: '오른쪽으로 기울여 모래알을 달조각의 빛 안으로 굴리세요.', fog: 0.32, shards: [[1, 70], [5, 209]], dropBudget: 0 },
+  { name: '달빛 아래 합체', instruction: '달조각 옆의 유리구슬을 찾아 합치고, 빛이 닿는 곳에서 이슬을 만드세요.', fog: 0.34, shards: [[2, 124], [5, 176]], stage: 2, dropBudget: 1 },
+  { name: '별을 밝히기', instruction: '안개 속에서 빛나는 달조각 두 개를 한쪽으로 모아 별을 만드세요.', fog: 0.36, shards: [[5, 85], [5, 236]], dropBudget: 0 },
+  { name: '두 번의 점등', instruction: '등불은 한 번에 4초 켜집니다. 첫 등불이 꺼지면 다시 켜고 유리구슬 두 개를 합치세요.', fog: 0.38, lanterns: 2, lanternSeconds: 4, shards: [[2, 220]], stage: 2, dropBudget: 1 },
+  { name: '안개 건너기', instruction: '모래알을 오른쪽 초록 구역으로 굴려 보내고, 뒤따르는 달조각의 빛으로 비추세요.', fog: 0.39, shards: [[1, 147], [5, 82]], zone: [270, RIGHT], dropBudget: 0 },
+  { name: '종 네 번 울리기', instruction: '안개 40%. 무료 등불 1회로 이슬 네 개를 찾아 종을 네 번 만드세요.', fog: 0.40, lanterns: 1, shards: [[3, 72], [3, 144], [3, 216], [3, 288]], stage: 3, dropBudget: 4, bellGoal: 4 },
+  { name: '빛의 연쇄', instruction: '한쪽으로 기울여 이슬 → 종 → 달조각 순서로 연쇄 합체를 만드세요.', fog: 0.43, shards: [[3, 84], [3, 139], [4, 239]], dropBudget: 0 },
+  { name: '안개 너머 새벽', instruction: '안개 45%. 등불을 켜 보름달을 찾고, 한 번의 투하로 새벽빛을 만드세요.', fog: 0.45, lanterns: 1, shards: [[7, 164]], stage: 7, dropBudget: 1 },
+  { name: '작은 빛 운반', instruction: '등불을 켜고 모래알을 합친 뒤, 유리구슬을 오른쪽 초록 구역으로 보내세요. 투하 1회, 최대 12°입니다.', fog: 0.35, shards: [[1, 110]], lanterns: 1, dropBudget: 1, tiltLimit: 12, zone: [263, RIGHT] },
+  { name: '느린 미끄럼', instruction: '최대 12°로 왼쪽에 유리구슬을 모아 이슬을 만들고 왼쪽 초록 구역까지 굴리세요.', fog: 0.37, shards: [[2, 70], [2, 230]], dropBudget: 0, tiltLimit: 12, zone: [LEFT, 125] },
+  { name: '두 종의 위치', instruction: '등불로 이슬 둘의 위치를 찾아 각각 합치세요. 투하는 두 번까지 할 수 있습니다.', fog: 0.39, shards: [[3, 90], [3, 237]], stage: 3, lanterns: 1, lanternSeconds: 6, dropBudget: 2, bellGoal: 2 },
+  { name: '안개 속 정지', instruction: '18° 안에서 모래알을 움직여 가운데 초록 구역에 멈추세요.', fog: 0.40, shards: [[1, 96]], zone: [146, 223], tiltLimit: 18, dropBudget: 0 },
+  { name: '별의 목적지', instruction: '달조각 두 개를 합쳐 별을 만들고 그 별을 오른쪽 초록 구역으로 보내세요.', fog: 0.42, shards: [[5, 85], [5, 231]], zone: [249, RIGHT], tiltLimit: 18, dropBudget: 0 },
+  { name: '한 번의 연쇄', instruction: '안내선에 이슬을 한 번 놓고, 왼쪽으로 기울여 종을 거쳐 달조각을 만드세요.', fog: 0.42, shards: [[3, 87], [4, 263]], aim: 165, stage: 3, dropBudget: 1, tiltLimit: 18 },
+  { name: '10도 새벽', instruction: '등불을 켜고 최대 10°만 기울여 보름달 두 개를 합치세요. 추가 투하는 없습니다.', fog: 0.43, lanterns: 1, shards: [[7, 105], [7, 252]], tiltLimit: 10, dropBudget: 0 },
+  { name: '세 줄의 빛', instruction: '등불을 켜고 세 구역의 유리구슬을 각각 합쳐 이슬 세 개를 만드세요. 투하는 세 번입니다.', fog: 0.44, lanterns: 1, lanternSeconds: 6, shards: [[2, 68], [2, 170], [2, 272]], stage: 2, dropBudget: 3 },
+  { name: '마지막 새벽', instruction: '등불로 위치를 확인하고 별을 한 번 투하하세요. 두 별을 합친 뒤 15° 이내에서 보름달을 모아 새벽을 여세요.', fog: 0.45, lanterns: 1, shards: [[7, 100], [6, 244]], aim: 244, stage: 6, dropBudget: 1, tiltLimit: 15 },
 ];
 
 function roomGoalZone(index, game) {
@@ -742,10 +804,15 @@ function roomGoalZone(index, game) {
 
 function createRoom(index, onEvent) {
   const room = ROOMS[index];
-  const game = new DreamJar(42, onEvent, {
+  const progress = { crossedRight: false, bells: 0 };
+  const game = new DreamJar(42, event => {
+    if (room.bellGoal && event.name === 'merge' && event.stage === 4) progress.bells++;
+    onEvent?.(event);
+  }, {
     timed: false, tiltLimit: room.tiltLimit, dropBudget: room.dropBudget,
+    fogCover: room.fog, lanterns: room.lanterns, lanternSeconds: room.lanternSeconds,
   });
-  game.roomProgress = { crossedRight: false };
+  game.roomProgress = progress;
   for (const [stage, x] of room.shards ?? []) {
     game.addShard(stage, x, FLOOR - SHARDS[stage - 1].radius);
   }
@@ -763,7 +830,13 @@ function createRoom(index, onEvent) {
     game.current = room.stage ?? 1;
     game.next = room.stage ?? 1;
   }
+  if (room.stage !== undefined) game.drawStage = () => room.stage;
   return game;
+}
+
+function litByMoon(game, body) {
+  return game.bodies.some(light => light.stage === 5 &&
+    Math.hypot(light.x - body.x, light.y - body.y) <= SHARDS[4].light);
 }
 
 function isRoomComplete(index, game) {
@@ -790,6 +863,28 @@ function isRoomComplete(index, game) {
     }
     case 10: return game.drops === 1 && game.bodies.some(body => body.stage === 3 && body.x >= ROOMS[index].zone[0]);
     case 11: return game.bodies.some(body => body.stage === 3);
+    case 12: return game.lanternsUsed > 0 && game.score >= 60;
+    case 13: return game.bodies.some(body => body.stage === 1 && litByMoon(game, body));
+    case 14: return game.bodies.some(body => body.stage === 3 && litByMoon(game, body));
+    case 15: return game.bodies.some(body => body.stage === 6);
+    case 16: return game.lanternsUsed === 2 && game.score >= 135;
+    case 17: return game.bodies.some(body => body.stage === 1 && body.x >= ROOMS[index].zone[0] && litByMoon(game, body));
+    case 18: return game.lanternsUsed > 0 && game.roomProgress.bells >= 4;
+    case 19: return game.bodies.some(body => body.stage === 5);
+    case 20: return game.lanternsUsed > 0 && game.dawns > 0 && game.phase === 'playing';
+    case 21: return game.lanternsUsed > 0 && game.bodies.some(body => body.stage === 2 && body.x >= ROOMS[index].zone[0]);
+    case 22: return game.bodies.some(body => body.stage === 3 && body.x <= ROOMS[index].zone[1]);
+    case 23: return game.lanternsUsed > 0 && game.roomProgress.bells >= ROOMS[index].bellGoal;
+    case 24: {
+      const body = game.bodies[0];
+      const [left, right] = ROOMS[index].zone;
+      return body && body.x >= left && body.x <= right && Math.abs(body.vx) < 12 && Math.abs(game.angle) < 2;
+    }
+    case 25: return game.bodies.some(body => body.stage === 6 && body.x >= ROOMS[index].zone[0]);
+    case 26: return game.bodies.some(body => body.stage === 5);
+    case 27:
+    case 29: return game.lanternsUsed > 0 && game.dawns > 0 && game.phase === 'playing';
+    case 28: return game.lanternsUsed > 0 && game.bodies.filter(body => body.stage === 3).length >= 3;
     default: return false;
   }
 }
@@ -806,6 +901,25 @@ const DAWN_LETTERS = [
   { title: '안개의 가장자리', text: '안개는 빛을 감추기도 하지만, 달조각이 가까이 오면 작은 흔적부터 드러나요.' },
   { title: '빈 항아리', text: '항아리가 다시 비었어요. 새벽마다 남는 건 빛을 모으는 법과 한 장의 편지예요.' },
   { title: '다음 꿈에게', text: '오늘의 마지막 빛을 내일의 꿈에게 남겨 둘게요. 항아리 뚜껑은 조금만 열어 두세요.' },
+  { title: '첫 자국', text: '항아리 벽에 별 하나가 스치고 지나갔어요. 오늘의 밤을 떠올릴 수 있도록 그 자국을 남겨 둘게요.' },
+  { title: '달이 내려앉는 곳', text: '달조각이 안개 속에 놓이자 잊었던 꿈 하나가 보였어요.' },
+  { title: '작은 물결', text: '기울이던 손을 멈추니 가장 작은 구슬만 조금 더 굴렀어요.' },
+  { title: '새벽의 온도', text: '차가웠던 항아리를 감싸 쥐었더니 조금씩 손이 따뜻해졌어요.' },
+  { title: '종 두 번', text: '첫 종소리와 다음 종소리 사이에 아직 밤이 남아 있었어요.' },
+  { title: '빛의 자리', text: '한쪽에 모아 둔 빛을 옮기니 아직 볼 수 없었던 파편이 나타났어요.' },
+  { title: '기다리는 등불', text: '등불이 꺼져도 방금 본 자리는 기억할 수 있었어요.' },
+  { title: '새벽을 세는 법', text: '오늘은 종이 네 번 울리는 동안 창가가 서서히 밝아졌어요.' },
+  { title: '두 번째 길', text: '오른편이 막혔을 때 왼편으로 돌아가는 길이 있었어요.' },
+  { title: '작은 여백', text: '항아리 안쪽에 구슬 하나 놓을 자리를 끝까지 남겨 두었어요.' },
+  { title: '밤의 고리', text: '서로 다른 조각이 차례로 만나 마지막에는 하나의 빛이 되었어요.' },
+  { title: '창가의 색', text: '새벽이 오자 창가의 보랏빛 끝에 살구색이 번졌어요.' },
+  { title: '둥근 모서리', text: '항아리를 기울여 볼 때마다 그 둥근 벽을 따라 다른 길이 생겼어요.' },
+  { title: '줄어드는 시간', text: '눈금이 작아질 때, 나는 아직 남아 있는 빈자리를 먼저 보았어요.' },
+  { title: '고요한 균형', text: '구슬이 가운데 멈추자 손이 먼저 편안해졌어요.' },
+  { title: '안개 위의 달', text: '보름달을 아래에 두었더니 안개의 가장자리까지 밝았어요.' },
+  { title: '빈자리의 편지', text: '오늘 비워 낸 항아리에 내일은 어떤 꿈을 가장 먼저 담을까요?' },
+  { title: '먼 새벽', text: '수많은 조각이 흔들리던 밤이 지나고 항아리에 다시 빛이 들었어요.' },
+  { title: '스물네 번째 아침', text: '항아리에 담았던 꿈을 모두 기억하진 못해요. 그래도 새벽이 올 때마다 빛을 기다리던 마음은 남아 있어요.' },
 ];
 
 const safeCount = value => Number.isSafeInteger(value) && value >= 0 ? value : 0;
@@ -851,9 +965,45 @@ function selectTheme(collection, id) {
 }
 
 
+const DAILY_LIMIT = 3;
+
+function seoulDay(now = new Date()) {
+  return new Date(now.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+function dailySeed(day) {
+  let hash = 2166136261;
+  for (const char of day + ':' + RULE_VERSION) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  return hash >>> 0;
+}
+
+function readDaily(raw, day) {
+  let stored;
+  try { stored = JSON.parse(raw); } catch { /* Start fresh for malformed data. */ }
+  const count = value => Number.isSafeInteger(value) && value >= 0 ? value : 0;
+  const sameDay = stored?.day === day && stored.version === RULE_VERSION;
+  return {
+    day, version: RULE_VERSION,
+    attempts: sameDay ? Math.min(DAILY_LIMIT, count(stored.attempts)) : 0,
+    best: sameDay ? count(stored.best) : 0,
+  };
+}
+
+function useDailyAttempt(record) {
+  if (record.attempts >= DAILY_LIMIT) return null;
+  return { ...record, attempts: record.attempts + 1 };
+}
+
+function finishDaily(record, score) {
+  if (record.attempts === 0 || !Number.isSafeInteger(score) || score <= record.best) return record;
+  return { ...record, best: score };
+}
 
 
-const BUILD = '0.1.0-dev.8';
+
+
+
+const BUILD = '0.1.0-dev.10';
 const get = id => document.getElementById(id);
 const board = get('board');
 const collectionDialog = get('collection-dialog');
@@ -870,6 +1020,12 @@ const laneIndicators = [0, 1, 2].map(index => {
 const query = new URLSearchParams(location.search);
 const preset = query.get('qa');
 const profileKey = preset ? 'dreamjar.qa.profile.2' : 'dreamjar.profile.2';
+const dailyKey = 'dreamjar.daily';
+let dailyRecord = readDaily(null, seoulDay());
+let dailyMode = false;
+let dailySessionDay = null;
+let lastResult = null;
+let runRewards = { mongnok: 0, shards: 0, letters: 0 };
 const collectionKey = preset ? 'dreamjar.qa.collection' : 'dreamjar.collection';
 let collection = readCollection(null);
 let collectionSaved = true;
@@ -1069,8 +1225,14 @@ function onEvent(event) {
     clearInputs();
     playSound('dawn');
   }
-  if (roomIndex === null) updateCollection(collectGameEvent(collection, event));
-  if (roomIndex === null && event.score > best) {
+  if (roomIndex === null && !dailyMode) {
+    const next = collectGameEvent(collection, event);
+    runRewards.mongnok += next.mongnok - collection.mongnok;
+    runRewards.shards += next.discovered.length - collection.discovered.length;
+    runRewards.letters += Math.min(next.dawns, DAWN_LETTERS.length) - Math.min(collection.dawns, DAWN_LETTERS.length);
+    updateCollection(next);
+  }
+  if (roomIndex === null && !dailyMode && event.score > best) {
     best = event.score;
     try { localStorage.setItem(profileKey, String(best)); } catch { /* Continue with an in-memory score. */ }
   }
@@ -1078,7 +1240,7 @@ function onEvent(event) {
     clearInputs();
     playSound('end');
     if (roomIndex === null) {
-      setOverlay('꿈이 잠들었습니다', '점수 ' + event.score.toLocaleString('ko-KR') + ' · 새벽 ' + event.dawns + '회', '새 꿈 시작');
+      showRunResult(event);
     } else {
       setOverlay('다시 도전', ROOMS[roomIndex].instruction, '이 방 다시 시작');
     }
@@ -1089,6 +1251,8 @@ function restart() {
   clearInputs();
   paused = false;
   roomCleared = false;
+  lastResult = null;
+  runRewards = { mongnok: 0, shards: 0, letters: 0 };
   elapsed = 0;
   last = null;
   aim = (roomIndex === null ? null : ROOMS[roomIndex].aim) ?? WIDTH / 2;
@@ -1097,13 +1261,14 @@ function restart() {
   announcedFirstMerge = false;
   dangerSoundPlayed = false;
   const fixedSeed = seedParam !== null && /^\d+$/.test(seedParam) ? Number(seedParam) >>> 0 : null;
-  state = roomIndex === null ? new DreamJar(fixedSeed ?? (Date.now() >>> 0), onEvent) : createRoom(roomIndex, onEvent);
+  const seed = dailyMode ? dailySeed(dailySessionDay ?? dailyRecord.day) : fixedSeed ?? (Date.now() >>> 0);
+  state = roomIndex === null ? new DreamJar(seed, onEvent) : createRoom(roomIndex, onEvent);
   state.updateDropAim(aim);
-  if (roomIndex === null && preset === 'dawn') {
+  if (roomIndex === null && !dailyMode && preset === 'dawn') {
     state.addShard(7, 120, 359);
     state.addShard(7, 239, 359);
   }
-  if (roomIndex === null && preset === 'overflow') {
+  if (roomIndex === null && !dailyMode && preset === 'overflow') {
     [7, 6, 7, 6].forEach((stage, level) => state.addShard(stage, 181, 358 - 105 * level));
     state.addShard(3, 84, 362);
     state.addShard(4, 87, 290);
@@ -1138,6 +1303,8 @@ function clearInputs() {
 }
 
 function setOverlay(title, detail, label) {
+  get('run-result').hidden = true;
+  get('continue').disabled = false;
   get('overlay-title').textContent = title;
   get('overlay-detail').textContent = detail;
   get('continue').textContent = label;
@@ -1178,8 +1345,15 @@ function setShardChip(chip, spec) {
 
 function syncHud() {
   updateText('score', state.score.toLocaleString('ko-KR'));
-  updateText('best', best.toLocaleString('ko-KR'));
+  updateText('best', (dailyMode ? dailyRecord.best : best).toLocaleString('ko-KR'));
   updateText('dawns', state.dawns);
+  const lamp = get('lantern');
+  if (!lamp.hidden) {
+    const seconds = Math.ceil(state.lanternTicks * STEP);
+    lamp.disabled = !started || paused || roomCleared || state.phase !== 'playing' || state.lanterns === 0 || seconds > 0;
+    updateText('lantern-label', seconds ? '등불 ' + seconds + '초 · 남은 횟수 ' + state.lanterns : '등불 켜기 · ' + state.lanterns + '회');
+  }
+  if (!get('bell-progress').hidden) updateText('bell-progress', '종 합체 ' + state.roomProgress.bells + ' / ' + ROOMS[roomIndex].bellGoal);
   updateText('collection-balance', collection.mongnok.toLocaleString('ko-KR'));
   const outOfDrops = state.drops >= state.dropBudget;
   get('drop-queue').hidden = outOfDrops;
@@ -1261,7 +1435,7 @@ function drawShard(x, y, r, stage, visible = true, alpha = 1) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = 'bold ' + Math.round(r * 1.08) + 'px system-ui';
-  ctx.fillText(spec.mark, x, y + 1);
+  ctx.fillText(!visible && state.fogCover !== null ? '?' : spec.mark, x, y + 1);
   ctx.restore();
 }
 
@@ -1308,27 +1482,29 @@ function draw() {
     ctx.fillRect(left, FLOOR - 5, right - left, 5);
   }
   const fog = state.fogTop;
-  const haze = ctx.createLinearGradient(0, fog, 0, FLOOR);
-  haze.addColorStop(0, '#c1ace840');
-  haze.addColorStop(1, '#b4a0dc79');
-  ctx.fillStyle = haze;
-  ctx.fillRect(LEFT, fog, RIGHT - LEFT, FLOOR - fog);
   const lights = state.bodies.filter(body => SHARDS[body.stage - 1].light);
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(LEFT, fog, RIGHT - LEFT, FLOOR - fog);
-  ctx.clip();
-  for (const light of lights) {
-    const spec = SHARDS[light.stage - 1];
-    const glow = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, spec.light);
-    glow.addColorStop(0, spec.color + '62');
-    glow.addColorStop(1, spec.color + '00');
-    ctx.fillStyle = glow;
-    ctx.fillRect(light.x - spec.light, light.y - spec.light, spec.light * 2, spec.light * 2);
+  if (state.lanternTicks === 0) {
+    const haze = ctx.createLinearGradient(0, fog, 0, FLOOR);
+    haze.addColorStop(0, '#c1ace840');
+    haze.addColorStop(1, state.fogCover === null ? '#b4a0dc79' : '#987fcbab');
+    ctx.fillStyle = haze;
+    ctx.fillRect(LEFT, fog, RIGHT - LEFT, FLOOR - fog);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(LEFT, fog, RIGHT - LEFT, FLOOR - fog);
+    ctx.clip();
+    for (const light of lights) {
+      const spec = SHARDS[light.stage - 1];
+      const glow = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, spec.light);
+      glow.addColorStop(0, spec.color + '62');
+      glow.addColorStop(1, spec.color + '00');
+      ctx.fillStyle = glow;
+      ctx.fillRect(light.x - spec.light, light.y - spec.light, spec.light * 2, spec.light * 2);
+    }
+    ctx.restore();
   }
-  ctx.restore();
   for (const body of state.bodies) {
-    const visible = body.y <= fog || lights.some(light => Math.hypot(light.x - body.x, light.y - body.y) <= SHARDS[light.stage - 1].light);
+    const visible = state.lanternTicks > 0 || body.y <= fog || lights.some(light => Math.hypot(light.x - body.x, light.y - body.y) <= SHARDS[light.stage - 1].light);
     drawShard(body.x, body.y, body.r, body.stage, visible);
   }
 
@@ -1611,14 +1787,19 @@ const roomButtons = ROOMS.map((room, index) => {
 
 function syncRoomControls() {
   const training = roomIndex !== null;
-  get('mode-endless').setAttribute('aria-pressed', String(!training));
+  get('mode-endless').setAttribute('aria-pressed', String(!training && !dailyMode));
+  get('mode-daily').setAttribute('aria-pressed', String(dailyMode));
+  get('daily-info').hidden = !dailyMode;
+  if (dailyMode) syncDailyHud();
   get('mode-rooms').setAttribute('aria-pressed', String(training));
-  updateText('mode-label', training ? '기억의 방' : '무한 꿈');
+  updateText('mode-label', training ? '기억의 방' : dailyMode ? '오늘의 꿈' : '무한 꿈');
   get('room-info').hidden = !training;
+  get('lantern').hidden = !training || !ROOMS[roomIndex].lanterns;
+  get('bell-progress').hidden = !training || !ROOMS[roomIndex].bellGoal;
   get('drop-timer').hidden = training;
   if (!training) return;
   const room = ROOMS[roomIndex];
-  updateText('room-name', (roomIndex + 1) + '. ' + room.name + (roomIndex >= 5 ? ' · 기울기 심화' : ''));
+  updateText('room-name', (roomIndex + 1) + '. ' + room.name + (room.fog ? (roomIndex >= 21 ? ' · 복합 미션' : ' · 안개 미션') + ' · ' + Math.round(room.fog * 100) + '%' : roomIndex >= 5 ? ' · 기울기 심화' : ''));
   updateText('room-hint', room.instruction);
   for (const [index, button] of roomButtons.entries()) {
     const complete = index < roomsCompleted;
@@ -1631,6 +1812,8 @@ function syncRoomControls() {
 }
 
 function openMode(index) {
+  dailyMode = false;
+  dailySessionDay = null;
   roomIndex = index;
   started = true;
   void confirmSound();
@@ -1653,18 +1836,139 @@ function completeRoom() {
     finalRoom ? '무한 꿈 시작' : '다음 방');
 }
 
+function refreshDaily() {
+  const day = seoulDay();
+  let stored = readDaily(null, day);
+  try { stored = readDaily(localStorage.getItem(dailyKey), day); } catch { /* Keep session data in memory. */ }
+  if (dailyRecord.day === day) {
+    stored.attempts = Math.max(dailyRecord.attempts, stored.attempts);
+    stored.best = Math.max(dailyRecord.best, stored.best);
+  }
+  dailyRecord = stored;
+}
+
+function saveDaily() {
+  try { localStorage.setItem(dailyKey, JSON.stringify(dailyRecord)); } catch { /* Session limits still apply. */ }
+}
+
+function syncDailyHud() {
+  updateText('daily-date', dailySessionDay ?? dailyRecord.day);
+  updateText('daily-remaining', '남은 도전 ' + (DAILY_LIMIT - dailyRecord.attempts) + ' / ' + DAILY_LIMIT);
+}
+
+function openDaily() {
+  refreshDaily();
+  dailyMode = true;
+  dailySessionDay = null;
+  roomIndex = null;
+  started = false;
+  restart();
+  setOverlay('오늘의 꿈', '같은 날짜에는 같은 파편 순서로 도전합니다.', '오늘의 꿈 시작');
+  get('continue').disabled = dailyRecord.attempts >= DAILY_LIMIT;
+}
+
+function beginDaily() {
+  refreshDaily();
+  const next = useDailyAttempt(dailyRecord);
+  if (!next) {
+    openDaily();
+    return;
+  }
+  dailyRecord = next;
+  dailySessionDay = next.day;
+  saveDaily();
+  started = true;
+  void confirmSound();
+  restart();
+  board.focus({ preventScroll: true });
+}
+
+function showRunResult(event) {
+  if (dailyMode && dailySessionDay === seoulDay()) {
+    refreshDaily();
+    dailyRecord = finishDaily(dailyRecord, event.score);
+    saveDaily();
+    syncDailyHud();
+  }
+  const mode = dailyMode ? '오늘의 꿈' : '무한 꿈';
+  const detail = dailyMode ? dailySessionDay + ' · 오늘 최고 ' + dailyRecord.best.toLocaleString('ko-KR') : mode;
+  const values = [
+    ['점수', event.score.toLocaleString('ko-KR')],
+    ['새벽', event.dawns + '회'],
+    ['투하', event.drops + '개'],
+    ['최고 파편', SHARDS[event.highest - 1]?.name ?? '없음'],
+  ];
+  const rewards = dailyMode ? '' : '+' + runRewards.mongnok + ' 몽록 · 신규 파편 ' + runRewards.shards + ' · 새 편지 ' + runRewards.letters;
+  lastResult = { title: mode + ' 결과', detail, values, rewards };
+  setOverlay(lastResult.title, detail, dailyMode ? '다시 도전' : '새 꿈 시작');
+  get('run-result').hidden = false;
+  for (const [i, [, value]] of values.entries()) updateText('result-value-' + i, value);
+  updateText('result-reward', rewards);
+  get('result-reward').hidden = !rewards;
+  get('continue').disabled = dailyMode && dailyRecord.attempts >= DAILY_LIMIT;
+  if (get('continue').disabled) get('save-result').focus();
+}
+
+get('save-result').addEventListener('click', () => {
+  if (!lastResult) return;
+  const card = document.createElement('canvas');
+  card.width = 640;
+  card.height = 440;
+  const ink = card.getContext('2d');
+  ink.fillStyle = '#f2ecff';
+  ink.fillRect(0, 0, 640, 440);
+  ink.fillStyle = '#fff';
+  ink.fillRect(24, 24, 592, 392);
+  ink.fillStyle = '#563697';
+  ink.font = 'bold 24px system-ui';
+  ink.fillText('꿈항아리', 48, 70);
+  ink.fillStyle = '#30214b';
+  ink.font = 'bold 36px system-ui';
+  ink.fillText(lastResult.title, 48, 125);
+  ink.font = '18px system-ui';
+  ink.fillText(lastResult.detail, 48, 158);
+  for (const [i, [label, value]] of lastResult.values.entries()) {
+    const x = 48 + i % 2 * 280;
+    const y = 209 + Math.floor(i / 2) * 80;
+    ink.font = '17px system-ui';
+    ink.fillText(label, x, y);
+    ink.font = 'bold 26px system-ui';
+    ink.fillText(value, x, y + 33);
+  }
+  ink.font = '17px system-ui';
+  ink.fillText(lastResult.rewards, 48, 392);
+  const link = document.createElement('a');
+  link.download = 'dreamjar-result.png';
+  link.href = card.toDataURL('image/png');
+  link.click();
+});
+
+get('mode-daily').addEventListener('click', () => {
+  if (!dailyMode || !started || state.phase === 'ended') openDaily();
+});
+
 get('mode-endless').addEventListener('click', () => {
-  if (roomIndex !== null || !started) openMode(null);
+  if (dailyMode || roomIndex !== null || !started) openMode(null);
 });
 get('mode-rooms').addEventListener('click', () => {
   if (roomIndex === null) openMode(roomsCompleted === ROOMS.length ? 0 : roomsCompleted);
 });
 get('room-restart').addEventListener('click', () => openMode(roomIndex));
+get('lantern').addEventListener('click', () => {
+  if (canInput() && state.activateLantern()) {
+    syncHud();
+    board.focus({ preventScroll: true });
+  }
+});
 
 get('pause').addEventListener('click', togglePause);
 get('continue').addEventListener('click', () => {
   if (roomCleared) {
     openMode(roomIndex + 1 < ROOMS.length ? roomIndex + 1 : null);
+    return;
+  }
+  if (dailyMode && (!started || state.phase === 'ended')) {
+    beginDaily();
     return;
   }
   if (!started || state.phase === 'ended') void confirmSound();
@@ -1709,7 +2013,7 @@ get('load-error').hidden = true;
 requestAnimationFrame(frame);
 if (preset || query.has('debug')) {
   window.dreamJarDebug = {
-    snapshot: () => ({ phase: state.phase, tick: state.tick, angle: state.angle, score: state.score, dawns: state.dawns, drops: state.drops, pressure: [...state.lanePressure], dangerLine: state.dangerLine, dropTicks: state.dropTicks, dropAim: state.dropAim, roomIndex, roomCleared, roomsCompleted, paused }),
+    snapshot: () => ({ phase: state.phase, tick: state.tick, angle: state.angle, score: state.score, dawns: state.dawns, drops: state.drops, pressure: [...state.lanePressure], dangerLine: state.dangerLine, dropTicks: state.dropTicks, dropAim: state.dropAim, roomIndex, roomCleared, roomsCompleted, lanternTicks: state.lanternTicks, lanterns: state.lanterns, dailyMode, dailyAttempts: dailyRecord.attempts, paused }),
     events: () => log.map(event => ({ ...event })),
   };
 }
