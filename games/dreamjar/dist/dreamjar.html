@@ -1,0 +1,1720 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7f5ff">
+<title>꿈항아리 · 무한 꿈</title>
+<style>
+:root {
+  color-scheme: light;
+  font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+  color: #292246;
+  background: #f7f5ff;
+  --accent: #6542c7;
+  --muted: #615979;
+  --line: #e4dcfa;
+  --shadow: 0 14px 36px #563c8f14;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 10% 0%, #ede4ff, transparent 48%),
+              radial-gradient(ellipse at 96% 70%, #fff0db, transparent 45%), #f8f6ff;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:disabled { cursor: default; opacity: .58; }
+button:focus-visible, canvas:focus-visible { outline: 3px solid #6542c7; outline-offset: -3px; }
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 335px);
+  gap: 20px 28px;
+  max-width: 940px;
+  padding: 24px 26px;
+  margin: auto;
+}
+.heading {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--line);
+}
+.brand, .actions { display: flex; align-items: center; gap: 9px; }
+.crest, .stat-icon, .guide-icon, .start-icon, .shard-chip, .tilt-arrow {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+}
+.crest {
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  background: linear-gradient(140deg, #a48af4, #6542c7);
+  color: white;
+  font-size: 29px;
+  box-shadow: 0 5px 14px #6542c74d;
+}
+h1, .brand p { margin: 0; }
+h1 { font-size: 24px; letter-spacing: -.055em; }
+.brand p { color: var(--muted); font-size: 12px; }
+.actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 11px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.actions button span:first-child { color: var(--accent); font-weight: 800; }
+.arena { width: min(100%, 420px, 51dvh); justify-self: center; min-width: 0; }
+.mode-picker, .room-steps, .room-header { display: flex; align-items: center; gap: 5px; }
+.mode-picker { margin-bottom: 7px; }
+.mode-picker button, .room-button, #room-restart {
+  min-height: 33px;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: #513685;
+  font-size: 12px;
+  font-weight: 700;
+}
+.mode-picker button[aria-pressed="true"], .room-button[aria-current="step"] {
+  color: #fff;
+  background: #6542c7;
+  border-color: #6542c7;
+}
+.room-info { margin-bottom: 7px; padding: 7px 8px; background: #f0eaff; border-radius: 10px; }
+.room-header { justify-content: space-between; gap: 4px; font-size: 12px; }
+.room-header button { min-height: 28px; white-space: nowrap; }
+.room-steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 5px 0; }
+.room-button { padding-inline: 2px; }
+.room-button[data-complete="true"]:not([aria-current="step"]) { background: #e1f6e9; color: #205b48; }
+.room-info p { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+#open-collection { margin-left: auto; white-space: nowrap; }
+#collection-balance { color: #5b37bf; }
+.collection-dialog {
+  width: min(94vw, 450px);
+  max-height: min(85dvh, 670px);
+  overflow: auto;
+  padding: 0 16px 16px;
+  border: 1px solid #dbcff5;
+  border-radius: 15px;
+  color: #3b2d53;
+  background: #fff;
+  box-shadow: 0 18px 60px #30254a3b;
+}
+.collection-dialog::backdrop { background: #30224d79; }
+.collection-dialog header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+.collection-dialog h2, .collection-dialog h3 { margin: 0; }
+.collection-dialog h2 { font-size: 19px; }
+.collection-dialog h3 { font-size: 14px; }
+.collection-dialog h3 span { margin-left: 4px; color: var(--muted); font-size: 11px; }
+.collection-dialog p { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.collection-dialog section { padding-top: 13px; }
+.collection-dialog button { min-height: 34px; padding: 5px 9px; border: 1px solid var(--line); border-radius: 8px; background: #f4efff; color: #4e327e; font-size: 12px; font-weight: 700; }
+.discovery-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
+.discovery-list li { display: grid; justify-items: center; gap: 5px; padding: 6px 2px; border-radius: 8px; background: #f7f3ff; font-size: 11px; }
+.theme-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.theme-list button { background: var(--theme-color); }
+.letter-list { display: grid; gap: 5px; padding: 0; margin: 8px 0 0; list-style: none; }
+.letter-list li { padding: 7px 9px; border-radius: 8px; background: #fff5e8; font-size: 12px; }
+@media (max-width: 345px) { .collection-unit { display: none; } }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 8px; }
+.stats > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  min-width: 0;
+}
+.stats > div > div { min-width: 0; }
+.stat-icon, .guide-icon { width: 30px; height: 30px; border-radius: 10px; font-size: 17px; font-weight: 800; }
+.violet { background: #ede5ff; color: #6746bd; }
+.peach { background: #ffedd6; color: #8e4e17; }
+.mint { background: #dff5e9; color: #217354; }
+.stats span:not(.stat-icon), .queue { font-size: 11px; color: var(--muted); }
+.stats strong { display: block; font-size: 16px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.board-wrap {
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #dcd1f3;
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+.board-bar { padding: 7px 10px 4px; }
+.queue { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.queue > div { display: flex; gap: 6px; align-items: center; min-height: 33px; padding: 4px 7px; background: #f4efff; border-radius: 9px; }
+.queue > div + div { background: #fff4e8; }
+.queue strong { display: block; color: #3a3050; font-size: 12px; }
+.shard-chip {
+  width: 26px;
+  height: 26px;
+  border: 1px solid #2c224a29;
+  border-radius: 50%;
+  background: var(--shard, #eee5fe);
+  color: #402c65;
+  font-size: 15px;
+  font-weight: 800;
+}
+.drop-timer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 4px 0 0;
+  padding: 3px 7px;
+  border-radius: 7px;
+  color: #50318d;
+  background: #f4efff;
+  font-size: 11px;
+}
+.drop-timer strong { font-size: 13px; font-variant-numeric: tabular-nums; }
+.drop-timer[data-urgent="true"] { color: #96322f; background: #ffebe4; }
+.status { min-height: 16px; margin: 4px 0 0; color: #665181; font-size: 11px; text-align: center; }
+.lanes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin: 0 9.17%; }
+.lane {
+  display: grid;
+  grid-template-columns: auto minmax(7px, 1fr) auto;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 4px;
+  min-width: 0;
+  border: 1px solid #eee7fa;
+  background: #faf7ff;
+  border-radius: 6px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.lane[data-active="true"] { border-color: #9571e4; }
+.lane[data-locked="true"] { background: #fff0ea; border-color: #db9989; color: #9b3b2d; }
+.lane meter { width: 100%; height: 7px; appearance: none; }
+.lane meter::-webkit-meter-bar { border: 0; border-radius: 99px; background: #e7dff5; }
+.lane meter::-webkit-meter-optimum-value { background: #8061d1; }
+.lane[data-locked="true"] meter::-webkit-meter-optimum-value { background: #bd5545; }
+.lane meter::-moz-meter-bar { background: #8061d1; }
+.lane[data-locked="true"] meter::-moz-meter-bar { background: #bd5545; }
+canvas { display: block; width: 100%; height: auto; aspect-ratio: 360 / 446; touch-action: none; cursor: crosshair; }
+.tilt {
+  width: 100%;
+  margin-top: 8px;
+  padding: 5px;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 56px;
+  gap: 5px;
+  align-items: stretch;
+  background: #ede5ff;
+  border: 1px solid #dbcef6;
+  border-radius: 12px;
+  color: #50318d;
+  text-align: center;
+  user-select: none;
+}
+.tilt-arrow {
+  display: inline-flex;
+  justify-content: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 2px;
+  background: white;
+  border: 1px solid #d8ccf2;
+  border-radius: 8px;
+  font-size: 20px;
+  touch-action: none;
+}
+.tilt-arrow kbd { font-size: 10px; font-weight: 700; }
+.tilt[data-direction="left"] #tilt-left,
+.tilt[data-direction="right"] #tilt-right { color: #fff; background: #6542c7; border-color: #6542c7; }
+.tilt-readout {
+  display: grid;
+  place-content: center;
+  min-height: 44px;
+  line-height: 1.4;
+  font-size: 13px;
+  cursor: ew-resize;
+  touch-action: none;
+}
+.tilt-hint { color: #61517b; font-size: 10px; }
+@media (pointer: coarse) { .tilt-arrow kbd { display: none; } }
+.help { align-self: center; display: grid; gap: 12px; }
+.guide { padding: 15px 16px; background: #fff; border: 1px solid var(--line); border-radius: 17px; box-shadow: var(--shadow); }
+.guide h2 { margin: 0; font-size: 16px; letter-spacing: -.02em; }
+.guide dl { margin: 12px 0 8px; }
+.guide dl > div { display: flex; align-items: flex-start; gap: 9px; margin-bottom: 10px; }
+.guide dt { font-size: 13px; font-weight: 750; }
+.guide dd, .limit { margin: 2px 0 0; font-size: 12px; line-height: 1.4; color: var(--muted); }
+.guide .keys { color: #6b4ca8; font-size: 11px; }
+.limit { border-top: 1px solid var(--line); padding-top: 8px; }
+.collection ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px 3px; list-style: none; padding: 0; margin: 10px 0 0; }
+.collection li { display: grid; justify-items: center; gap: 3px; color: var(--muted); font-size: 10px; text-align: center; }
+.overlay { position: absolute; inset: 0; display: grid; place-items: center; padding: 14px; background: #eee6ffab; z-index: 2; }
+.card {
+  width: min(100%, 235px);
+  padding: 17px 13px;
+  text-align: center;
+  background: #fffffff5;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 16px 45px #624e902c;
+}
+.start-icon { width: 47px; height: 47px; border-radius: 15px; background: #fff0d2; color: #a75718; font-size: 32px; }
+.card h2 { margin: 7px 0 4px; font-size: 22px; letter-spacing: -.045em; }
+.card p { margin: 5px 0 12px; font-size: 12px; color: var(--muted); }
+.card button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 750;
+  padding: 0 16px;
+}
+.card button:focus-visible { outline: 2px solid #fff; outline-offset: -4px; }
+@media (max-width: 640px) {
+  .shell { display: block; max-width: 430px; padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
+  .heading { margin-bottom: 8px; padding-bottom: 6px; }
+  .crest { width: 38px; height: 38px; border-radius: 12px; font-size: 24px; }
+  h1 { font-size: 20px; }
+  .arena { width: min(100%, max(240px, 49dvh)); margin: auto; }
+  .help { margin-top: 10px; }
+  .guide .keys { display: none; }
+}
+@media (max-width: 350px) {
+  .actions { gap: 4px; }
+  .actions button { padding: 0 6px; gap: 3px; }
+  .stat-icon { width: 24px; height: 24px; }
+}
+</style>
+
+</head>
+<body>
+<noscript><p class="boot-note">게임을 플레이하려면 이 페이지의 JavaScript를 허용해 주세요.</p></noscript>
+<main class="shell">
+  <header class="heading">
+    <div class="brand"><span class="crest" aria-hidden="true">✦</span><div><h1>꿈항아리</h1><p id="mode-label">무한 꿈</p></div></div>
+    <div class="actions">
+      <a href="../../../index.html" class="home-link" style="text-decoration:none; color:inherit; font-size:13px; font-weight:600; padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,0.85); display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px #563c8f10;" title="게임 목록으로 돌아가기">🏠 홈</a>
+      <button id="sound" type="button" aria-pressed="true"><span aria-hidden="true">♫</span><span id="sound-label">소리 끄기</span></button>
+      <button id="pause" type="button" disabled><span aria-hidden="true">Ⅱ</span><span id="pause-label">일시정지</span></button>
+    </div>
+  </header>
+  <section class="arena" aria-label="꿈항아리 플레이">
+    <div class="mode-picker" role="group" aria-label="게임 모드 선택">
+      <button id="mode-endless" type="button" aria-pressed="true">무한 꿈</button>
+      <button id="mode-rooms" type="button" aria-pressed="false">기억의 방</button>
+      <button id="open-collection" type="button" aria-haspopup="dialog">수집함 <span id="collection-balance">0</span><span class="collection-unit"> 몽록</span></button>
+    </div>
+    <section id="room-info" class="room-info" aria-label="기억의 방 목표" hidden>
+      <div class="room-header"><strong id="room-name"></strong><button id="room-restart" type="button">이 방 다시 시작</button></div>
+      <div class="room-steps" id="room-steps" role="group" aria-label="연습방 선택"></div>
+      <p id="room-hint"></p>
+    </section>
+    <div class="stats">
+      <div><span class="stat-icon violet" aria-hidden="true">✧</span><div><span>점수</span><strong id="score">0</strong></div></div>
+      <div><span class="stat-icon peach" aria-hidden="true">♛</span><div><span>최고 기록</span><strong id="best">0</strong></div></div>
+      <div><span class="stat-icon mint" aria-hidden="true">☀</span><div><span>새벽</span><strong id="dawns">0</strong></div></div>
+    </div>
+    <div class="board-wrap">
+      <div class="board-bar">
+        <div class="queue" id="drop-queue">
+          <div><span class="shard-chip" id="current-icon" aria-hidden="true"></span><span>현재 <strong id="current"></strong></span></div>
+          <div><span class="shard-chip" id="next-icon" aria-hidden="true"></span><span>다음 <strong id="next"></strong></span></div>
+        </div>
+        <div id="drop-timer" class="drop-timer" aria-label="투하 제한 시간"><span>투하까지</span><strong id="drop-seconds">—</strong></div>
+        <p id="status" class="status" role="status"></p>
+      </div>
+      <div class="lanes" role="group" aria-label="투하 구역 혼잡도">
+        <span id="lane-0" class="lane"><span>왼쪽</span><meter min="0" max="4" value="0" aria-label="왼쪽 혼잡도"></meter><span class="locked-label" hidden>잠김</span></span>
+        <span id="lane-1" class="lane"><span>가운데</span><meter min="0" max="4" value="0" aria-label="가운데 혼잡도"></meter><span class="locked-label" hidden>잠김</span></span>
+        <span id="lane-2" class="lane"><span>오른쪽</span><meter min="0" max="4" value="0" aria-label="오른쪽 혼잡도"></meter><span class="locked-label" hidden>잠김</span></span>
+      </div>
+      <canvas id="board" width="360" height="446" tabindex="0" aria-label="꿈항아리 게임 보드" aria-describedby="controls"></canvas>
+      <div id="overlay" class="overlay">
+        <div class="card">
+          <span class="start-icon" aria-hidden="true">☼</span>
+          <h2 id="overlay-title">무한 꿈</h2>
+          <p id="overlay-detail">같은 파편을 합쳐 새벽빛을 만드세요.</p>
+          <button type="button" id="continue" disabled>게임 시작 <span aria-hidden="true">→</span></button>
+          <p id="load-error" role="alert" hidden>압축을 푼 뒤 dist/dreamjar.html을 Chrome에서 열어 주세요.</p>
+        </div>
+      </div>
+    </div>
+    <div class="tilt" id="tilt-controls" role="group" aria-label="항아리 기울이기">
+      <button class="tilt-arrow" id="tilt-left" type="button" aria-label="왼쪽으로 기울이기"><span aria-hidden="true">←</span><kbd aria-hidden="true">A</kbd></button>
+      <div id="tilt" class="tilt-readout">
+        <span class="tilt-hint">좌우 드래그로 기울이기</span>
+        <strong>중력 <span id="gravity-direction">↓ 아래</span></strong>
+      </div>
+      <button class="tilt-arrow" id="tilt-right" type="button" aria-label="오른쪽으로 기울이기"><span aria-hidden="true">→</span><kbd aria-hidden="true">D</kbd></button>
+    </div>
+  </section>
+  <aside class="help" id="controls">
+    <section class="guide">
+      <h2>플레이 방법</h2>
+      <dl>
+        <div><span class="guide-icon violet" aria-hidden="true">↓</span><div><dt>파편 놓기</dt><dd>보드에서 위치를 잡고 손을 떼세요. 시간이 끝나면 원이 표시된 곳에 자동으로 떨어집니다.</dd><dd class="keys">← → 이동 · Space 투하</dd></div></div>
+        <div><span class="guide-icon mint" aria-hidden="true">↔</span><div><dt>항아리 기울이기</dt><dd>좌우 버튼을 누르거나 하단 바를 드래그하세요. 손을 떼면 중력이 다시 아래로 향합니다.</dd><dd class="keys">A 왼쪽 · D 오른쪽</dd></div></div>
+        <div><span class="guide-icon peach" aria-hidden="true">▥</span><div><dt>투하 구역 나누기</dt><dd>한 구역이 가득 차면 다른 구역에 놓아 다시 여세요.</dd></div></div>
+      </dl>
+      <p class="limit">파편이 입구선 위에 3초간 쌓이면 게임이 끝납니다.</p>
+    </section>
+    <section class="guide collection">
+      <h2>파편 성장 순서</h2>
+      <ol id="shard-guide" aria-label="8단계 파편 순서"></ol>
+    </section>
+  </aside>
+</main>
+<dialog id="collection-dialog" class="collection-dialog" aria-labelledby="collection-title">
+  <header><div><h2 id="collection-title">수집함</h2><p id="collection-total"></p></div><button id="collection-close" type="button" autofocus>닫기</button></header>
+  <p id="collection-save-warning" role="status" hidden>지금은 진행을 브라우저에 저장할 수 없습니다.</p>
+  <section aria-labelledby="discovery-title">
+    <h3 id="discovery-title">파편 도감 <span id="discovery-total"></span></h3>
+    <ul class="discovery-list" id="discovery-list"></ul>
+  </section>
+  <section aria-labelledby="theme-title">
+    <h3 id="theme-title">항아리 테마</h3>
+    <p>무한 꿈에서 합체하면 1몽록, 새벽을 열면 20몽록을 얻습니다.</p>
+    <div class="theme-list" id="theme-list"></div>
+  </section>
+  <section aria-labelledby="letter-title">
+    <h3 id="letter-title">새벽 편지 <span id="letter-total"></span></h3>
+    <ol class="letter-list" id="letter-list"></ol>
+  </section>
+</dialog>
+<script id="boot-watch">
+  window.addEventListener('load', () => {
+    if (document.getElementById('continue').disabled) {
+      document.getElementById('load-error').hidden = false;
+    }
+  });
+</script>
+<script>
+(() => {
+"use strict";
+const WIDTH = 360;
+const HEIGHT = 446;
+const LEFT = 33;
+const RIGHT = 327;
+const FLOOR = 420;
+const DANGER = 104;
+const STEP = 1 / 120;
+const RULE_VERSION = 3;
+const LANE_COUNT = 3;
+const LANE_LIMIT = 4;
+const LANE_WIDTH = (RIGHT - LEFT) / LANE_COUNT;
+const SHARDS = [
+  { name: '모래알', radius: 12, color: '#e7d2a3', mark: '●' },
+  { name: '유리구슬', radius: 17, color: '#9ee7f9', mark: '◌' },
+  { name: '이슬', radius: 22, color: '#9af3d6', mark: '◇' },
+  { name: '종', radius: 29, color: '#eab1ef', mark: '♫' },
+  { name: '달조각', radius: 37, color: '#c2b4ff', mark: '☾', light: 60 },
+  { name: '별', radius: 47, color: '#ffe295', mark: '✦', light: 90 },
+  { name: '보름달', radius: 60, color: '#ffb7b5', mark: '✺', light: 130 },
+  { name: '새벽빛', radius: 73, color: '#ffd8a6', mark: '✷' },
+];
+const MAX_TILT = 25;
+const DROP_DELAY = 0.35;
+const WARNING_TICKS = Math.round(2 / STEP);
+const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
+
+function seededRandom(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
+class DreamJar {
+  constructor(seed, onEvent = () => {}, { timed = true, tiltLimit = MAX_TILT, dropBudget = Infinity } = {}) {
+    this.timed = timed;
+    this.tiltLimit = tiltLimit;
+    this.dropBudget = dropBudget;
+    this.seed = seed >>> 0;
+    this.random = seededRandom(this.seed);
+    this.onEvent = onEvent;
+    this.phase = 'playing';
+    this.bodies = [];
+    this.tick = 0;
+    this.nextId = 1;
+    this.angle = 0;
+    this.angularSpeed = 0;
+    this.target = null;
+    this.score = 0;
+    this.dawns = 0;
+    this.highest = 0;
+    this.drops = 0;
+    this.roundDrops = 0;
+    this.lanePressure = Array(LANE_COUNT).fill(0);
+    this.danger = 0;
+    this.cooldown = 0;
+    this.transition = 0;
+    this.dropAim = WIDTH / 2;
+    this.dropTicks = this.dropLimitTicks;
+    this.current = this.drawStage();
+    this.next = this.drawStage();
+    this.emit('session_start');
+  }
+
+  emit(name, data = {}) {
+    this.onEvent({ name, tick: this.tick, seed: this.seed, rule: RULE_VERSION, ...data });
+  }
+
+  drawStage() {
+    const value = this.random();
+    if (value < 0.45) return 1;
+    if (value < 0.75) return 2;
+    return value < 0.93 ? 3 : 4;
+  }
+
+  aim(x) {
+    const radius = SHARDS[this.current - 1].radius;
+    return clamp(x, LEFT + radius + 1, RIGHT - radius - 1);
+  }
+
+  laneAt(x) {
+    return clamp(Math.floor((this.aim(x) - LEFT) / LANE_WIDTH), 0, LANE_COUNT - 1);
+  }
+
+  get dropLimitTicks() {
+    const seconds = this.dawns ? 5 : this.drops < 5 ? 8 : 6;
+    return Math.round(seconds / STEP);
+  }
+
+  updateDropAim(x) {
+    if (Number.isFinite(x) && this.lanePressure[this.laneAt(x)] < LANE_LIMIT) {
+      this.dropAim = this.aim(x);
+      return;
+    }
+    if (this.lanePressure[this.laneAt(this.dropAim)] < LANE_LIMIT) {
+      this.dropAim = this.aim(this.dropAim);
+      return;
+    }
+    // An accepted drop cools the other lanes, so at least one stays open.
+    let nearest = WIDTH;
+    for (const [index, pressure] of this.lanePressure.entries()) {
+      if (pressure >= LANE_LIMIT) continue;
+      const center = LEFT + (index + 0.5) * LANE_WIDTH;
+      const distance = Math.abs(center - this.dropAim);
+      if (distance >= nearest) continue;
+      nearest = distance;
+      x = center;
+    }
+    this.dropAim = this.aim(x);
+  }
+
+  get dangerLine() {
+    return DANGER + Math.min(20, Math.floor(this.roundDrops / 16) * 4);
+  }
+
+  get fogTop() {
+    return FLOOR - (FLOOR - DANGER) * Math.min(0.45, 0.25 + this.dawns * 0.05);
+  }
+
+  drop(x, automatic = false) {
+    if (this.phase !== 'playing' || this.cooldown > 0 || this.drops >= this.dropBudget || !Number.isFinite(x)) return false;
+    const position = this.aim(x);
+    const lane = this.laneAt(position);
+    if (this.lanePressure[lane] >= LANE_LIMIT) return false;
+    this.lanePressure = this.lanePressure.map((pressure, index) =>
+      index === lane ? pressure + 1 : Math.max(0, pressure - 1)
+    );
+    this.roundDrops++;
+    this.addShard(this.current, position, 52, 0, 30, false);
+    this.drops++;
+    this.highest = Math.max(this.highest, this.current);
+    this.emit('fragment_drop', { x: Math.round(position * 10) / 10, stage: this.current, drops: this.drops, lane, automatic });
+    this.current = this.next;
+    this.next = this.drawStage();
+    this.cooldown = DROP_DELAY;
+    this.dropTicks = this.dropLimitTicks;
+    this.updateDropAim(x);
+    return true;
+  }
+
+  addShard(stage, x, y, vx = 0, vy = 0, arrived = true) {
+    const { radius } = SHARDS[stage - 1];
+    const shard = { id: this.nextId++, stage, r: radius, x, y, vx, vy, arrived, age: 0 };
+    this.bodies.push(shard);
+    return shard;
+  }
+
+  setTilt(value) {
+    const next = value === null ? null : Math.round(clamp(value, -this.tiltLimit, this.tiltLimit));
+    if (next === this.target) return;
+    this.target = next;
+    this.emit('tilt_input', { target: next });
+  }
+
+  updateTilt() {
+    if (this.target !== null) {
+      const movement = clamp(this.target - this.angle, -60 * STEP, 60 * STEP);
+      this.angle += movement;
+      this.angularSpeed = movement / STEP;
+      return;
+    }
+    this.angularSpeed = clamp(this.angularSpeed + (-45 * this.angle - 7 * this.angularSpeed) * STEP, -60, 60);
+    this.angle = clamp(this.angle + this.angularSpeed * STEP, -this.tiltLimit, this.tiltLimit);
+  }
+
+  step(aim = this.dropAim) {
+    if (this.phase === 'ended') return;
+    this.tick++;
+    if (this.phase === 'dawn') {
+      this.transition -= STEP;
+      if (this.transition <= 0) this.phase = 'playing';
+      return;
+    }
+    this.updateTilt();
+    const readyAtStart = this.cooldown <= 0;
+    this.cooldown = Math.max(0, this.cooldown - STEP);
+    const radians = this.angle * Math.PI / 180;
+    for (const body of this.bodies) {
+      body.age += STEP;
+      body.vx = (body.vx + Math.sin(radians) * 860 * STEP) * 0.997;
+      body.vy = (body.vy + Math.cos(radians) * 860 * STEP) * 0.999;
+      body.x += body.vx * STEP;
+      body.y += body.vy * STEP;
+      if (body.y + body.r >= DANGER || body.age >= 0.6) body.arrived = true;
+      this.constrain(body);
+    }
+
+    const consumed = new Set();
+    const merges = [];
+    for (let pass = 0; pass < 3; pass++) {
+      for (let i = 0; i < this.bodies.length; i++) {
+        const first = this.bodies[i];
+        if (consumed.has(first.id)) continue;
+        for (let j = i + 1; j < this.bodies.length; j++) {
+          const second = this.bodies[j];
+          if (consumed.has(second.id)) continue;
+          const dx = second.x - first.x;
+          const dy = second.y - first.y;
+          const distance = Math.hypot(dx, dy);
+          const combined = first.r + second.r;
+          if (distance > combined) continue;
+          if (first.stage === second.stage) {
+            consumed.add(first.id);
+            consumed.add(second.id);
+            merges.push([first, second]);
+            break;
+          }
+          this.separate(first, second, distance, combined, dx, dy);
+        }
+      }
+      for (const body of this.bodies) this.constrain(body);
+    }
+
+    if (merges.length) {
+      this.bodies = this.bodies.filter(body => !consumed.has(body.id));
+      for (const [first, second] of merges) {
+        this.merge(first, second);
+        if (this.phase === 'dawn') return;
+      }
+    }
+
+    const dangerLine = this.dangerLine;
+    const overflow = this.bodies.some(body => body.arrived && body.y - body.r < dangerLine);
+    this.danger = overflow ? this.danger + STEP : 0;
+    if (this.danger + 1e-9 >= 3) {
+      this.phase = 'ended';
+      this.emit('session_end', { score: this.score, drops: this.drops, highest: this.highest, dawns: this.dawns, reason: 'overflow' });
+      return;
+    }
+    this.updateDropAim(aim);
+    if (!this.timed || !readyAtStart) return;
+    this.dropTicks--;
+    if (this.dropTicks === WARNING_TICKS) this.emit('drop_timer_warning');
+    if (this.dropTicks === 0) this.drop(this.dropAim, true);
+  }
+
+  constrain(body) {
+    if (body.x < LEFT + body.r) {
+      body.x = LEFT + body.r;
+      body.vx = Math.max(0, -body.vx * 0.22);
+    }
+    if (body.x > RIGHT - body.r) {
+      body.x = RIGHT - body.r;
+      body.vx = Math.min(0, -body.vx * 0.22);
+    }
+    if (body.y > FLOOR - body.r) {
+      body.y = FLOOR - body.r;
+      body.vy = Math.min(0, -body.vy * 0.22);
+      body.vx *= 0.98;
+    }
+  }
+
+  separate(first, second, distance, combined, dx, dy) {
+    const nx = distance ? dx / distance : 1;
+    const ny = distance ? dy / distance : 0;
+    const inverseFirst = 1 / (first.r * first.r);
+    const inverseSecond = 1 / (second.r * second.r);
+    const sum = inverseFirst + inverseSecond;
+    const overlap = (combined - distance) / sum;
+    first.x -= nx * overlap * inverseFirst;
+    first.y -= ny * overlap * inverseFirst;
+    second.x += nx * overlap * inverseSecond;
+    second.y += ny * overlap * inverseSecond;
+    const approach = (second.vx - first.vx) * nx + (second.vy - first.vy) * ny;
+    if (approach >= 0) return;
+    const impulse = -1.18 * approach / sum;
+    first.vx -= nx * impulse * inverseFirst;
+    first.vy -= ny * impulse * inverseFirst;
+    second.vx += nx * impulse * inverseSecond;
+    second.vy += ny * impulse * inverseSecond;
+  }
+
+  merge(first, second) {
+    const stage = first.stage + 1;
+    const x = (first.x + second.x) / 2;
+    const y = (first.y + second.y) / 2;
+    this.highest = Math.max(this.highest, stage);
+    this.score += stage * stage * 15;
+    this.emit('merge', { stage, x, y, score: this.score });
+    if (stage < 8) {
+      this.constrain(this.addShard(stage, x, y, (first.vx + second.vx) / 2, (first.vy + second.vy) / 2));
+      return;
+    }
+    this.score += 2000;
+    this.dawns++;
+    this.roundDrops = 0;
+    this.lanePressure.fill(0);
+    this.dropTicks = this.dropLimitTicks;
+    this.danger = 0;
+    this.cooldown = 0;
+    this.angle = 0;
+    this.angularSpeed = 0;
+    this.target = null;
+    this.bodies.length = 0;
+    this.phase = 'dawn';
+    this.transition = 1.35;
+    this.emit('dawn_reached', { dawns: this.dawns, score: this.score, drops: this.drops });
+  }
+}
+
+
+const CENTER = WIDTH / 2;
+const FOG_TARGET = 126;
+const LAMP = 178;
+
+const ROOMS = [
+  { name: '첫 투하', instruction: '보드에서 원하는 위치에 구슬을 떨어뜨리세요. 키보드는 Space로 투하할 수 있습니다.' },
+  { name: '첫 합체', instruction: '안내선에 모래알을 떨어뜨려 아래의 모래알과 합치세요.', aim: CENTER },
+  { name: '기울이기', instruction: '오른쪽 기울기 버튼이나 D를 잠깐 눌러 구슬을 오른쪽으로 굴리세요.' },
+  { name: '안개 속 빛', instruction: '달조각이 밝히는 곳의 모래알을 찾아 합치세요. 안내선은 그 모래알의 위치입니다.', aim: FOG_TARGET },
+  { name: '새벽 열기', instruction: '보름달 두 개를 합쳐 새벽빛을 만들고, 항아리가 비워지는 모습을 확인하세요.', aim: CENTER },
+  { name: '왼쪽으로 모으기', instruction: '왼쪽으로 기울여 모래알 두 개를 합치세요. 추가 투하는 없습니다.', shards: [[1, 76], [1, 222]], dropBudget: 0 },
+  { name: '15도 새벽', instruction: '최대 15°만 기울일 수 있습니다. 보름달 두 개를 한쪽으로 모아 새벽을 한 번 여세요.', shards: [[7, 106], [7, 254]], tiltLimit: 15, dropBudget: 0 },
+  { name: '오른쪽 표식', instruction: '오른쪽으로 기울여 유리구슬의 중심을 오른쪽 초록 구역에 넣으세요.', shards: [[2, 106]], zone: [270, RIGHT], dropBudget: 0 },
+  { name: '가운데 멈추기', instruction: '오른쪽으로 굴린 뒤 제때 손을 떼거나 반대 방향으로 기울여 가운데 초록 구역 안에 멈추세요.', shards: [[1, 96]], zone: [154, 224], dropBudget: 0 },
+  { name: '방향 전환', instruction: '같은 구슬을 오른쪽 초록 구역에 넣은 뒤, 왼쪽 초록 구역까지 되돌리세요.', shards: [[2, 180]], zone: [265, RIGHT], returnZone: [LEFT, 95], dropBudget: 0 },
+  { name: '한 번의 투하', instruction: '안내선에 유리구슬을 한 번 놓으세요. 기울여 합친 뒤 이슬을 오른쪽 초록 구역으로 굴리세요.', shards: [[2, 82]], stage: 2, aim: 241, zone: [260, RIGHT], dropBudget: 1 },
+  { name: '연쇄 합체', instruction: '18° 안에서 기울여 모래알 두 개를 합치고, 새 유리구슬을 나머지 유리구슬과 합쳐 이슬을 만드세요.', shards: [[1, 78], [1, 134], [2, 240]], tiltLimit: 18, dropBudget: 0 },
+];
+
+function roomGoalZone(index, game) {
+  const room = ROOMS[index];
+  return game.roomProgress.crossedRight && room.returnZone ? room.returnZone : room.zone;
+}
+
+function createRoom(index, onEvent) {
+  const room = ROOMS[index];
+  const game = new DreamJar(42, onEvent, {
+    timed: false, tiltLimit: room.tiltLimit, dropBudget: room.dropBudget,
+  });
+  game.roomProgress = { crossedRight: false };
+  for (const [stage, x] of room.shards ?? []) {
+    game.addShard(stage, x, FLOOR - SHARDS[stage - 1].radius);
+  }
+  if (index === 1) game.addShard(1, CENTER, FLOOR - SHARDS[0].radius);
+  if (index === 2) game.addShard(1, CENTER, FLOOR - SHARDS[0].radius);
+  if (index === 3) {
+    game.addShard(1, FOG_TARGET, FLOOR - SHARDS[0].radius);
+    game.addShard(5, LAMP, FLOOR - SHARDS[4].radius);
+  }
+  if (index === 4) {
+    game.current = 7;
+    game.next = 7;
+    game.addShard(7, CENTER, FLOOR - SHARDS[6].radius);
+  } else {
+    game.current = room.stage ?? 1;
+    game.next = room.stage ?? 1;
+  }
+  return game;
+}
+
+function isRoomComplete(index, game) {
+  switch (index) {
+    case 0: return game.drops > 0 && game.bodies.some(body => body.y > 200);
+    case 1: return game.score > 0;
+    case 2: return game.bodies[0]?.x >= CENTER + 30;
+    case 3: return game.bodies.some(body => body.stage === 2 && body.y > game.fogTop &&
+      game.bodies.some(light => light.stage === 5 &&
+        Math.hypot(light.x - body.x, light.y - body.y) <= SHARDS[4].light));
+    case 4: return game.dawns > 0 && game.phase === 'playing';
+    case 5: return game.bodies.some(body => body.stage === 2 && body.x < 125);
+    case 6: return game.dawns > 0 && game.phase === 'playing';
+    case 7: return game.bodies[0]?.x >= ROOMS[index].zone[0];
+    case 8: {
+      const body = game.bodies[0];
+      const [left, right] = ROOMS[index].zone;
+      return body && body.x >= left && body.x <= right && Math.abs(body.vx) < 12 && Math.abs(game.angle) < 2;
+    }
+    case 9: {
+      const x = game.bodies[0]?.x ?? CENTER;
+      if (x >= ROOMS[index].zone[0]) game.roomProgress.crossedRight = true;
+      return game.roomProgress.crossedRight && x <= ROOMS[index].returnZone[1];
+    }
+    case 10: return game.drops === 1 && game.bodies.some(body => body.stage === 3 && body.x >= ROOMS[index].zone[0]);
+    case 11: return game.bodies.some(body => body.stage === 3);
+    default: return false;
+  }
+}
+
+const THEMES = [
+  { id: 'original', name: '보랏빛 항아리', cost: 0, colors: ['#f6f0ff', '#e6e5ff', '#9677d6a3'] },
+  { id: 'mint', name: '민트빛 항아리', cost: 12, colors: ['#edfdf6', '#ccebe4', '#498a78a3'] },
+  { id: 'sunrise', name: '살구빛 항아리', cost: 30, colors: ['#fff6e6', '#fce0d2', '#ba7451a3'] },
+];
+
+const DAWN_LETTERS = [
+  { title: '첫 빛', text: '항아리 바닥에 남은 가장 작은 빛이 새벽을 불러왔어요. 어제 놓친 꿈도 오늘 다시 담을 수 있겠지요.' },
+  { title: '기울어진 밤', text: '한쪽으로 몰린 꿈을 조금 기울였더니, 멀어 보이던 빛 두 점이 만났어요.' },
+  { title: '안개의 가장자리', text: '안개는 빛을 감추기도 하지만, 달조각이 가까이 오면 작은 흔적부터 드러나요.' },
+  { title: '빈 항아리', text: '항아리가 다시 비었어요. 새벽마다 남는 건 빛을 모으는 법과 한 장의 편지예요.' },
+  { title: '다음 꿈에게', text: '오늘의 마지막 빛을 내일의 꿈에게 남겨 둘게요. 항아리 뚜껑은 조금만 열어 두세요.' },
+];
+
+const safeCount = value => Number.isSafeInteger(value) && value >= 0 ? value : 0;
+const addCount = (value, amount) => Math.min(Number.MAX_SAFE_INTEGER, value + amount);
+const validStage = stage => Number.isInteger(stage) && stage >= 1 && stage <= 8;
+
+function readCollection(raw) {
+  let data;
+  try { data = JSON.parse(raw); } catch { /* Start fresh if the prior value is malformed. */ }
+  if (data?.version !== 1) data = {};
+  const owned = ['original', ...THEMES.slice(1).filter(theme =>
+    Array.isArray(data.owned) && data.owned.includes(theme.id)).map(theme => theme.id)];
+  return {
+    version: 1,
+    mongnok: safeCount(data.mongnok),
+    dawns: safeCount(data.dawns),
+    discovered: Array.isArray(data.discovered) ? [...new Set(data.discovered.filter(validStage))] : [],
+    owned,
+    theme: owned.includes(data.theme) ? data.theme : 'original',
+  };
+}
+
+function collectGameEvent(collection, event) {
+  if (event.name === 'dawn_reached') {
+    return { ...collection, dawns: addCount(collection.dawns, 1), mongnok: addCount(collection.mongnok, 20) };
+  }
+  if (!['fragment_drop', 'merge'].includes(event.name) || !validStage(event.stage)) return collection;
+  const known = collection.discovered.includes(event.stage);
+  if (known && event.name === 'fragment_drop') return collection;
+  return {
+    ...collection,
+    mongnok: addCount(collection.mongnok, event.name === 'merge' ? 1 : 0),
+    discovered: known ? collection.discovered : [...collection.discovered, event.stage],
+  };
+}
+
+function selectTheme(collection, id) {
+  const theme = THEMES.find(entry => entry.id === id);
+  if (!theme || id === collection.theme) return collection;
+  if (collection.owned.includes(id)) return { ...collection, theme: id };
+  if (collection.mongnok < theme.cost) return collection;
+  return { ...collection, mongnok: collection.mongnok - theme.cost, owned: [...collection.owned, id], theme: id };
+}
+
+
+
+
+const BUILD = '0.1.0-dev.8';
+const get = id => document.getElementById(id);
+const board = get('board');
+const collectionDialog = get('collection-dialog');
+const tilt = get('tilt');
+const tiltControls = get('tilt-controls');
+const tiltButtons = [[get('tilt-left'), -25], [get('tilt-right'), 25]];
+const ctx = board.getContext('2d');
+const laneIndicators = [0, 1, 2].map(index => {
+  const element = get('lane-' + index);
+  const meter = element.querySelector('meter');
+  meter.max = LANE_LIMIT;
+  return { element, meter, label: element.querySelector('.locked-label') };
+});
+const query = new URLSearchParams(location.search);
+const preset = query.get('qa');
+const profileKey = preset ? 'dreamjar.qa.profile.2' : 'dreamjar.profile.2';
+const collectionKey = preset ? 'dreamjar.qa.collection' : 'dreamjar.collection';
+let collection = readCollection(null);
+let collectionSaved = true;
+try { collection = readCollection(localStorage.getItem(collectionKey)); }
+catch { collectionSaved = false; }
+const seedParam = query.get('seed');
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const log = [];
+const keys = new Set();
+const stars = Array.from({ length: 38 }, (_, i) => ({
+  x: (i * 79 + 13) % WIDTH, y: (i * 127 + 23) % HEIGHT, r: i % 7 === 0 ? 1.15 : 0.55,
+}));
+let best = 0;
+try { best = Math.max(0, Number(localStorage.getItem(profileKey)) || 0); } catch { /* Private browsing can block storage. */ }
+const roomsKey = 'dreamjar.rooms.progress';
+let roomsCompleted = 0;
+try {
+  const count = Number(localStorage.getItem(roomsKey));
+  if (Number.isInteger(count) && count >= 0 && count <= ROOMS.length) roomsCompleted = count;
+} catch { /* Progress can still be kept for the current session. */ }
+let roomIndex = null;
+let roomCleared = false;
+let state;
+let aim = WIDTH / 2;
+let paused = false;
+let started = false;
+let dropPointer = null;
+let tiltPointer = null;
+let tiltStart = 0;
+let tiltTarget = null;
+let tiltButtonPress = null;
+let last = null;
+let elapsed = 0;
+let animationTime = 0;
+let autoDropUntil = 0;
+let particles = [];
+let announcedFirstMerge = false;
+const soundPreference = 'dreamjar.sound';
+let soundOn = true;
+try { soundOn = localStorage.getItem(soundPreference) !== 'off'; } catch { /* Storage is optional. */ }
+const AudioContextClass = window.AudioContext ?? window.webkitAudioContext;
+const MediaAudio = window.Audio;
+const waveforms = new Map();
+let audioContext;
+let audioOutput;
+let mediaAudio;
+let soundNeedsRetry = false;
+let dangerSoundPlayed = false;
+
+function cueNotes(cue, stage) {
+  const pitch = 530 * 2 ** ((stage - 2) / 6);
+  return {
+    ready: [[659, 659, 0, 0.15, 0.24], [880, 880, 0.075, 0.2, 0.24]],
+    drop: [[660, 360, 0, 0.14, 0.26]],
+    merge: [[pitch, pitch, 0, 0.22, 0.23], [pitch * 1.5, pitch * 1.5, 0.045, 0.19, 0.16]],
+    dawn: [[523, 523, 0, 0.32, 0.25], [659, 659, 0.10, 0.38, 0.25], [784, 784, 0.20, 0.42, 0.24], [1047, 1047, 0.31, 0.52, 0.22]],
+    timer: [[750, 820, 0, 0.09, 0.16], [850, 890, 0.12, 0.09, 0.16]],
+    warning: [[510, 420, 0, 0.14, 0.24], [510, 420, 0.17, 0.16, 0.24]],
+    end: [[470, 365, 0, 0.22, 0.22], [340, 250, 0.13, 0.36, 0.20]],
+  }[cue];
+}
+
+function resumeAudio() {
+  if (!AudioContextClass) return Promise.resolve();
+  try {
+    if (!audioContext) {
+      audioContext = new AudioContextClass();
+      audioOutput = audioContext.createGain();
+      audioOutput.connect(audioContext.destination);
+    }
+    audioOutput.gain.value = 1;
+    if (audioContext.state !== 'running') return audioContext.resume().catch(() => {});
+  } catch { /* The HTML audio path remains available. */ }
+  return Promise.resolve();
+}
+
+function playSynth(notes) {
+  for (const [pitch, finish, delay, length, volume] of notes) {
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const start = audioContext.currentTime + delay;
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(pitch, start);
+    oscillator.frequency.exponentialRampToValueAtTime(finish, start + length);
+    gain.gain.setValueAtTime(0.001, start);
+    gain.gain.exponentialRampToValueAtTime(volume, start + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + length);
+    oscillator.connect(gain);
+    gain.connect(audioOutput);
+    oscillator.start(start);
+    oscillator.stop(start + length);
+  }
+}
+
+function wavSource(notes) {
+  const rate = 22050;
+  const length = Math.ceil(Math.max(...notes.map(([, , delay, duration]) => delay + duration)) * rate);
+  const samples = new Float32Array(length);
+  for (const [pitch, finish, delay, duration, volume] of notes) {
+    const start = Math.round(delay * rate);
+    let phase = 0;
+    for (let i = 0; i < Math.floor(duration * rate) && start + i < length; i++) {
+      const time = i / rate;
+      const progress = time / duration;
+      const envelope = Math.min(1, time / 0.012) * (1 - progress) ** 2;
+      phase += 2 * Math.PI * (pitch * (finish / pitch) ** progress) / rate;
+      samples[start + i] += Math.sin(phase) * volume * envelope;
+    }
+  }
+  const bytes = new Uint8Array(44 + length * 2);
+  const header = new DataView(bytes.buffer);
+  for (const [offset, text] of [[0, 'RIFF'], [8, 'WAVEfmt '], [36, 'data']]) {
+    bytes.set([...text].map(character => character.charCodeAt(0)), offset);
+  }
+  header.setUint32(4, bytes.length - 8, true);
+  header.setUint32(16, 16, true);
+  header.setUint16(20, 1, true);
+  header.setUint16(22, 1, true);
+  header.setUint32(24, rate, true);
+  header.setUint32(28, rate * 2, true);
+  header.setUint16(32, 2, true);
+  header.setUint16(34, 16, true);
+  header.setUint32(40, length * 2, true);
+  for (let i = 0; i < length; i++) {
+    header.setInt16(44 + i * 2, Math.max(-1, Math.min(1, samples[i])) * 32767, true);
+  }
+  return 'data:audio/wav;base64,' + btoa(String.fromCharCode(...bytes));
+}
+
+async function playMedia(cue, stage, notes) {
+  if (!MediaAudio) return false;
+  try {
+    const key = cue + ':' + stage;
+    if (!waveforms.has(key)) waveforms.set(key, wavSource(notes));
+    mediaAudio ??= new MediaAudio();
+    mediaAudio.src = waveforms.get(key);
+    await mediaAudio.play();
+    return true;
+  } catch { return false; }
+}
+
+function playSound(cue, stage = 2) {
+  if (!soundOn) return;
+  const notes = cueNotes(cue, stage);
+  if (audioContext?.state === 'running' && audioOutput) playSynth(notes);
+  else void playMedia(cue, stage, notes);
+}
+
+async function confirmSound() {
+  if (!soundOn) return;
+  const resuming = resumeAudio();
+  const notes = cueNotes('ready', 2);
+  let played = false;
+  if (audioContext?.state === 'running' && audioOutput) {
+    playSynth(notes);
+    played = true;
+  } else {
+    played = await playMedia('ready', 2, notes);
+  }
+  if (!played && soundOn) {
+    await Promise.race([resuming, new Promise(resolve => setTimeout(resolve, 800))]);
+    if (soundOn && audioContext?.state === 'running' && audioOutput) {
+      playSynth(notes);
+      played = true;
+    } else if (soundOn) played = await playMedia('ready', 2, notes);
+  }
+  if (!soundOn) return;
+  soundNeedsRetry = !played;
+  syncSoundButton();
+}
+
+function onEvent(event) {
+  const record = { build: BUILD, ...event };
+  log.push(record);
+  if (log.length > 1800) log.shift();
+  if (event.name === 'drop_timer_warning') playSound('timer');
+  if (event.name === 'fragment_drop') {
+    if (event.automatic) {
+      releaseDropPointer();
+      autoDropUntil = animationTime + 850;
+    }
+    if (soundOn && audioContext?.state !== 'running') void resumeAudio();
+    playSound('drop');
+  }
+  if (event.name === 'merge') {
+    if (!announcedFirstMerge) {
+      log.push({ ...record, name: 'first_merge' });
+      announcedFirstMerge = true;
+    }
+    if (!reducedMotion.matches) {
+      particles.push({ ...event, time: animationTime });
+      if (particles.length > 24) particles.shift();
+    }
+    if (event.stage < 8) playSound('merge', event.stage);
+  }
+  if (event.name === 'dawn_reached') {
+    clearInputs();
+    playSound('dawn');
+  }
+  if (roomIndex === null) updateCollection(collectGameEvent(collection, event));
+  if (roomIndex === null && event.score > best) {
+    best = event.score;
+    try { localStorage.setItem(profileKey, String(best)); } catch { /* Continue with an in-memory score. */ }
+  }
+  if (event.name === 'session_end') {
+    clearInputs();
+    playSound('end');
+    if (roomIndex === null) {
+      setOverlay('꿈이 잠들었습니다', '점수 ' + event.score.toLocaleString('ko-KR') + ' · 새벽 ' + event.dawns + '회', '새 꿈 시작');
+    } else {
+      setOverlay('다시 도전', ROOMS[roomIndex].instruction, '이 방 다시 시작');
+    }
+  }
+}
+
+function restart() {
+  clearInputs();
+  paused = false;
+  roomCleared = false;
+  elapsed = 0;
+  last = null;
+  aim = (roomIndex === null ? null : ROOMS[roomIndex].aim) ?? WIDTH / 2;
+  autoDropUntil = 0;
+  particles = [];
+  announcedFirstMerge = false;
+  dangerSoundPlayed = false;
+  const fixedSeed = seedParam !== null && /^\d+$/.test(seedParam) ? Number(seedParam) >>> 0 : null;
+  state = roomIndex === null ? new DreamJar(fixedSeed ?? (Date.now() >>> 0), onEvent) : createRoom(roomIndex, onEvent);
+  state.updateDropAim(aim);
+  if (roomIndex === null && preset === 'dawn') {
+    state.addShard(7, 120, 359);
+    state.addShard(7, 239, 359);
+  }
+  if (roomIndex === null && preset === 'overflow') {
+    [7, 6, 7, 6].forEach((stage, level) => state.addShard(stage, 181, 358 - 105 * level));
+    state.addShard(3, 84, 362);
+    state.addShard(4, 87, 290);
+    state.addShard(3, 85, 224);
+    state.addShard(5, 282, 340);
+    state.addShard(4, 285, 268);
+  }
+  hideOverlay();
+  syncRoomControls();
+  syncHud();
+}
+
+function releaseDropPointer() {
+  const capturedDrop = dropPointer;
+  dropPointer = null;
+  if (capturedDrop !== null && board.hasPointerCapture(capturedDrop)) board.releasePointerCapture(capturedDrop);
+}
+
+function clearInputs() {
+  releaseDropPointer();
+  const capturedTilt = tiltPointer;
+  const buttonPress = tiltButtonPress;
+  tiltButtonPress = null;
+  if (buttonPress?.button.hasPointerCapture(buttonPress.pointerId)) {
+    buttonPress.button.releasePointerCapture(buttonPress.pointerId);
+  }
+  tiltPointer = null;
+  tiltTarget = null;
+  keys.clear();
+  if (capturedTilt !== null && tilt.hasPointerCapture(capturedTilt)) tilt.releasePointerCapture(capturedTilt);
+  state?.setTilt(null);
+}
+
+function setOverlay(title, detail, label) {
+  get('overlay-title').textContent = title;
+  get('overlay-detail').textContent = detail;
+  get('continue').textContent = label;
+  get('overlay').hidden = false;
+  if (!document.hidden) get('continue').focus({ preventScroll: true });
+}
+
+function hideOverlay() {
+  get('overlay').hidden = true;
+  get('pause-label').textContent = '일시정지';
+  get('pause').disabled = !started;
+}
+
+function togglePause() {
+  if (!started || roomCleared || state.phase === 'ended') return;
+  paused = !paused;
+  elapsed = 0;
+  if (paused) {
+    clearInputs();
+    setOverlay('잠시 쉬어 가세요', '지금 상태에서 이어서 플레이할 수 있습니다.', '계속하기');
+    get('pause-label').textContent = '계속하기';
+    return;
+  }
+  hideOverlay();
+  board.focus({ preventScroll: true });
+}
+
+function updateText(id, text) {
+  const element = get(id);
+  if (element.textContent !== String(text)) element.textContent = text;
+}
+
+function setShardChip(chip, spec) {
+  if (chip.textContent === spec.mark) return;
+  chip.textContent = spec.mark;
+  chip.style.setProperty('--shard', spec.color);
+}
+
+function syncHud() {
+  updateText('score', state.score.toLocaleString('ko-KR'));
+  updateText('best', best.toLocaleString('ko-KR'));
+  updateText('dawns', state.dawns);
+  updateText('collection-balance', collection.mongnok.toLocaleString('ko-KR'));
+  const outOfDrops = state.drops >= state.dropBudget;
+  get('drop-queue').hidden = outOfDrops;
+  const current = SHARDS[state.current - 1];
+  const next = SHARDS[state.next - 1];
+  updateText('current', current.name);
+  updateText('next', next.name);
+  setShardChip(get('current-icon'), current);
+  setShardChip(get('next-icon'), next);
+  const direction = state.angle < -1.5 ? 'left' : state.angle > 1.5 ? 'right' : 'down';
+  if (tiltControls.dataset.direction !== direction) {
+    tiltControls.dataset.direction = direction;
+    updateText('gravity-direction', { left: '↙ 왼쪽 아래', right: '↘ 오른쪽 아래', down: '↓ 아래' }[direction]);
+  }
+  if (!state.danger) dangerSoundPlayed = false;
+  else if (started && !paused && state.phase === 'playing' && state.danger >= 0.45 && !dangerSoundPlayed) {
+    dangerSoundPlayed = true;
+    playSound('warning');
+  }
+  const active = state.laneAt(aim);
+  for (const [i, { element, meter, label }] of laneIndicators.entries()) {
+    const pressure = state.lanePressure[i];
+    const locked = pressure >= LANE_LIMIT;
+    if (meter.value !== pressure) meter.value = pressure;
+    if (label.hidden === locked) {
+      label.hidden = !locked;
+      element.dataset.locked = String(locked);
+    }
+    const selected = String(i === active);
+    if (element.dataset.active !== selected) element.dataset.active = selected;
+  }
+  const timer = get('drop-timer');
+  const seconds = Math.ceil(state.dropTicks * STEP);
+  const timing = state.timed && started && state.phase === 'playing' && state.cooldown <= 0;
+  const urgent = String(timing && seconds <= 2);
+  if (timer.dataset.urgent !== urgent) timer.dataset.urgent = urgent;
+  updateText('drop-seconds', !timing ? '—' : seconds + '초');
+  let message = '위치를 고르고 파편을 놓으세요.';
+  if (state.phase === 'dawn') message = '새벽이 열렸습니다 · +2,000';
+  else if (state.phase === 'ended') message = '입구선 초과';
+  else if (state.danger) message = '입구선을 비우세요 · ' + Math.max(1, Math.ceil(3 - state.danger)) + '초';
+  else if (animationTime < autoDropUntil) message = '시간 초과 · 자동 투하';
+  else if (outOfDrops) message = '좌우로 기울여 파편을 움직이세요.';
+  else if (state.lanePressure[active] >= LANE_LIMIT) {
+    message = state.timed ? '이 구역이 잠겼어요. 시간이 끝나면 원이 표시된 곳에 떨어집니다.' : '이 구역이 잠겼어요. 열린 구역에 놓거나 이 방을 다시 시작하세요.';
+  }
+  updateText('status', message);
+}
+
+function buildShardGuide() {
+  const guide = get('shard-guide');
+  for (const spec of SHARDS) {
+    const entry = document.createElement('li');
+    const chip = document.createElement('span');
+    chip.className = 'shard-chip';
+    chip.setAttribute('aria-hidden', 'true');
+    setShardChip(chip, spec);
+    entry.append(chip, spec.name);
+    guide.append(entry);
+  }
+}
+
+function drawShard(x, y, r, stage, visible = true, alpha = 1) {
+  const spec = SHARDS[stage - 1];
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  const fill = ctx.createRadialGradient(x - r * 0.35, y - r * 0.42, 1, x, y, r);
+  fill.addColorStop(0, '#fffefa');
+  fill.addColorStop(0.62, visible ? spec.color : '#eee7fa');
+  fill.addColorStop(1, visible ? spec.color : '#cdc0e7');
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = visible ? '#53398e77' : '#8f79af';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = visible ? '#402759' : '#6b5586';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold ' + Math.round(r * 1.08) + 'px system-ui';
+  ctx.fillText(spec.mark, x, y + 1);
+  ctx.restore();
+}
+
+function draw() {
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const desiredWidth = Math.round(WIDTH * dpr);
+  const desiredHeight = Math.round(HEIGHT * dpr);
+  if (board.width !== desiredWidth || board.height !== desiredHeight) {
+    board.width = desiredWidth;
+    board.height = desiredHeight;
+  }
+  ctx.setTransform(board.width / WIDTH, 0, 0, board.height / HEIGHT, 0, 0);
+  const dawn = state.phase === 'dawn';
+  const background = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+  const [top, bottom, speckles] = THEMES.find(theme => theme.id === collection.theme).colors;
+  background.addColorStop(0, dawn ? '#fff1c9' : top);
+  background.addColorStop(1, dawn ? '#ffc9b7' : bottom);
+  ctx.fillStyle = background;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.fillStyle = speckles;
+  for (const star of stars) {
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.r, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = '#ffffff7d';
+  ctx.fillRect(LEFT, 63, RIGHT - LEFT, FLOOR - 63);
+  for (const [lane, pressure] of state.lanePressure.entries()) {
+    ctx.fillStyle = pressure >= LANE_LIMIT ? '#ff9e843d' : ['#f9c9e52a', '#c4b0ff33', '#a5eadf3e'][lane];
+    const x = LEFT + lane * LANE_WIDTH;
+    ctx.fillRect(x, 63, LANE_WIDTH, FLOOR - 63);
+    if (lane > 0) {
+      ctx.fillStyle = '#aa8bdf51';
+      ctx.fillRect(x, 63, 1, FLOOR - 63);
+    }
+  }
+  const zone = roomIndex === null ? null : roomGoalZone(roomIndex, state);
+  if (zone) {
+    const [left, right] = zone;
+    ctx.fillStyle = '#31998128';
+    ctx.fillRect(left, FLOOR - 58, right - left, 58);
+    ctx.fillStyle = '#26735e';
+    ctx.fillRect(left, FLOOR - 5, right - left, 5);
+  }
+  const fog = state.fogTop;
+  const haze = ctx.createLinearGradient(0, fog, 0, FLOOR);
+  haze.addColorStop(0, '#c1ace840');
+  haze.addColorStop(1, '#b4a0dc79');
+  ctx.fillStyle = haze;
+  ctx.fillRect(LEFT, fog, RIGHT - LEFT, FLOOR - fog);
+  const lights = state.bodies.filter(body => SHARDS[body.stage - 1].light);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(LEFT, fog, RIGHT - LEFT, FLOOR - fog);
+  ctx.clip();
+  for (const light of lights) {
+    const spec = SHARDS[light.stage - 1];
+    const glow = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, spec.light);
+    glow.addColorStop(0, spec.color + '62');
+    glow.addColorStop(1, spec.color + '00');
+    ctx.fillStyle = glow;
+    ctx.fillRect(light.x - spec.light, light.y - spec.light, spec.light * 2, spec.light * 2);
+  }
+  ctx.restore();
+  for (const body of state.bodies) {
+    const visible = body.y <= fog || lights.some(light => Math.hypot(light.x - body.x, light.y - body.y) <= SHARDS[light.stage - 1].light);
+    drawShard(body.x, body.y, body.r, body.stage, visible);
+  }
+
+  ctx.strokeStyle = '#9579c7';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(LEFT, 62);
+  ctx.lineTo(LEFT, FLOOR);
+  ctx.lineTo(RIGHT, FLOOR);
+  ctx.lineTo(RIGHT, 62);
+  ctx.stroke();
+  ctx.setLineDash([5, 6]);
+  ctx.strokeStyle = state.danger ? '#c64a48' : '#9479c5';
+  ctx.beginPath();
+  ctx.moveTo(LEFT, state.dangerLine);
+  ctx.lineTo(RIGHT, state.dangerLine);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  if (state.phase === 'playing' && !roomCleared && state.drops < state.dropBudget) {
+    const target = roomIndex === null ? null : ROOMS[roomIndex].aim;
+    if (target !== null && target !== undefined) {
+      ctx.strokeStyle = '#3c9989';
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      ctx.moveTo(target, 80);
+      ctx.lineTo(target, FLOOR);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    const current = SHARDS[state.current - 1];
+    const x = state.dropAim;
+    const ready = state.cooldown <= 0;
+    if (ready) {
+      const urgent = state.dropTicks * STEP <= 2;
+      const radius = current.radius + 5;
+      ctx.strokeStyle = urgent ? '#a83631' : '#7652c8';
+      ctx.beginPath();
+      ctx.moveTo(x, 53 + radius);
+      ctx.lineTo(x, 137);
+      ctx.stroke();
+      if (started && state.timed) {
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(x, 53, radius, -Math.PI / 2,
+          -Math.PI / 2 + 2 * Math.PI * state.dropTicks / state.dropLimitTicks);
+        ctx.stroke();
+        ctx.lineWidth = 1;
+      }
+    }
+    drawShard(x, 53, current.radius, state.current, true, ready ? 1 : 0.35);
+  }
+
+  particles = particles.filter(particle => animationTime - particle.time < 460);
+  for (const particle of particles) {
+    const progress = (animationTime - particle.time) / 460;
+    ctx.strokeStyle = SHARDS[particle.stage - 1].color;
+    ctx.globalAlpha = 1 - progress;
+    ctx.beginPath();
+    ctx.arc(particle.x, particle.y, 8 + progress * 42, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  if (dawn) {
+    ctx.fillStyle = '#814925';
+    ctx.textAlign = 'center';
+    ctx.font = '36px system-ui';
+    ctx.fillText('✷', WIDTH / 2, HEIGHT / 2 - 8);
+    ctx.font = 'bold 23px system-ui';
+    ctx.fillText('새벽빛', WIDTH / 2, HEIGHT / 2 + 32);
+  }
+}
+
+function frame(now) {
+  requestAnimationFrame(frame);
+  const frameTime = last === null ? 0 : Math.min(75, now - last);
+  last = now;
+  if (started && !paused && !roomCleared && !collectionDialog.open && !document.hidden) {
+    animationTime += frameTime;
+    elapsed += frameTime / 1000;
+    while (elapsed >= STEP) {
+      const move = Number(keys.has('ArrowRight')) - Number(keys.has('ArrowLeft'));
+      if (move) aim = state.aim(aim + move * 190 * STEP);
+      const direction = Number(keys.has('KeyD')) - Number(keys.has('KeyA'));
+      if (tiltButtonPress && !tiltButtonPress.held && animationTime >= tiltButtonPress.until) {
+        tiltButtonPress = null;
+      }
+      const target = tiltTarget ?? tiltButtonPress?.target ?? (direction ? direction * 25 : null);
+      state.setTilt(state.phase === 'playing' ? target : null);
+      state.step(aim);
+      elapsed -= STEP;
+      if (roomIndex !== null && isRoomComplete(roomIndex, state)) {
+        completeRoom();
+        break;
+      }
+    }
+  }
+  syncHud();
+  draw();
+}
+
+function pointerAim(event) {
+  const rect = board.getBoundingClientRect();
+  aim = state.aim((event.clientX - rect.left) / rect.width * WIDTH);
+}
+
+const canInput = () => started && !paused && !roomCleared && !collectionDialog.open && state.phase === 'playing';
+board.addEventListener('pointerdown', event => {
+  if (!canInput() || dropPointer !== null || event.button !== 0) return;
+  event.preventDefault();
+  board.focus({ preventScroll: true });
+  dropPointer = event.pointerId;
+  board.setPointerCapture(dropPointer);
+  pointerAim(event);
+});
+board.addEventListener('pointermove', event => {
+  if (event.pointerId === dropPointer || (dropPointer === null && event.pointerType === 'mouse' && canInput())) {
+    pointerAim(event);
+  }
+});
+board.addEventListener('pointerup', event => {
+  if (event.pointerId !== dropPointer) return;
+  pointerAim(event);
+  dropPointer = null;
+  if (canInput()) state.drop(aim);
+});
+for (const cancel of ['pointercancel', 'lostpointercapture']) {
+  board.addEventListener(cancel, event => {
+    if (event.pointerId === dropPointer) dropPointer = null;
+  });
+}
+
+tilt.addEventListener('pointerdown', event => {
+  if (!canInput() || tiltPointer !== null || tiltButtonPress?.held || event.button !== 0) return;
+  event.preventDefault();
+  tiltButtonPress = null;
+  tiltPointer = event.pointerId;
+  tiltStart = event.clientX;
+  tilt.setPointerCapture(tiltPointer);
+});
+tilt.addEventListener('pointermove', event => {
+  if (event.pointerId === tiltPointer) tiltTarget = (event.clientX - tiltStart) / tilt.clientWidth * 90;
+});
+for (const release of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+  tilt.addEventListener(release, event => {
+    if (event.pointerId !== tiltPointer) return;
+    tiltPointer = null;
+    tiltTarget = null;
+  });
+}
+
+for (const [button, target] of tiltButtons) {
+  button.addEventListener('pointerdown', event => {
+    if (!canInput() || tiltPointer !== null || tiltButtonPress?.held || event.button !== 0) return;
+    tiltButtonPress = { button, target, pointerId: event.pointerId, held: true, until: animationTime + 220 };
+    button.setPointerCapture(event.pointerId);
+  });
+  for (const release of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+    button.addEventListener(release, event => {
+      if (tiltButtonPress?.button !== button || tiltButtonPress.pointerId !== event.pointerId || !tiltButtonPress.held) return;
+      if (release === 'pointerup') tiltButtonPress.held = false;
+      else tiltButtonPress = null;
+    });
+  }
+  button.addEventListener('click', event => {
+    if (canInput() && event.detail === 0 && tiltPointer === null && !tiltButtonPress?.held) {
+      tiltButtonPress = { button, target, pointerId: -1, held: false, until: animationTime + 220 };
+    }
+  });
+}
+
+function gameHasFocus() {
+  return document.activeElement === board || tiltControls.contains(document.activeElement);
+}
+
+document.addEventListener('keydown', event => {
+  if (collectionDialog.open) return;
+  if (event.code === 'Escape' && (gameHasFocus() || paused)) {
+    event.preventDefault();
+    if (!event.repeat) togglePause();
+    return;
+  }
+  if (!gameHasFocus() || !canInput()) return;
+  if (event.code === 'Space' && document.activeElement === board) {
+    event.preventDefault();
+    if (!event.repeat) state.drop(aim);
+    return;
+  }
+  if (!['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD'].includes(event.code)) return;
+  event.preventDefault();
+  keys.add(event.code);
+});
+document.addEventListener('keyup', event => keys.delete(event.code));
+document.addEventListener('focusout', event => {
+  if (event.relatedTarget !== board && !tiltControls.contains(event.relatedTarget)) keys.clear();
+});
+window.addEventListener('blur', clearInputs);
+document.addEventListener('visibilitychange', () => {
+  last = null;
+  elapsed = 0;
+  if (document.hidden && !paused && state.phase !== 'ended') togglePause();
+});
+
+function updateCollection(next) {
+  if (next === collection) return;
+  collection = next;
+  try {
+    localStorage.setItem(collectionKey, JSON.stringify(collection));
+    collectionSaved = true;
+  } catch { collectionSaved = false; }
+}
+
+function renderCollection() {
+  updateText('collection-total', collection.mongnok.toLocaleString('ko-KR') + ' 몽록');
+  updateText('discovery-total', collection.discovered.length + ' / ' + SHARDS.length);
+  updateText('letter-total', Math.min(collection.dawns, DAWN_LETTERS.length) + ' / ' + DAWN_LETTERS.length);
+  get('collection-save-warning').hidden = collectionSaved;
+  get('discovery-list').replaceChildren(...SHARDS.map((spec, index) => {
+    const known = collection.discovered.includes(index + 1);
+    const item = document.createElement('li');
+    const chip = document.createElement('span');
+    chip.className = 'shard-chip';
+    chip.setAttribute('aria-hidden', 'true');
+    setShardChip(chip, known ? spec : { mark: '?', color: '#e7dff4' });
+    item.append(chip, known ? spec.name : '미발견');
+    return item;
+  }));
+  get('letter-list').replaceChildren(...DAWN_LETTERS.map((letter, index) => {
+    const opened = index < collection.dawns;
+    const item = document.createElement('li');
+    const title = document.createElement('strong');
+    title.textContent = (index + 1) + '. ' + (opened ? letter.title : '봉인된 편지');
+    const body = document.createElement('p');
+    body.textContent = opened ? letter.text : '무한 꿈에서 새벽 ' + (index + 1) + '회 달성하면 열립니다.';
+    item.append(title, body);
+    return item;
+  }));
+  get('theme-list').replaceChildren(...THEMES.map(theme => {
+    const owned = collection.owned.includes(theme.id);
+    const active = collection.theme === theme.id;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.theme = theme.id;
+    button.style.setProperty('--theme-color', theme.colors[1]);
+    button.disabled = active || (!owned && collection.mongnok < theme.cost);
+    button.textContent = theme.name + (active ? ' · 사용 중' : owned ? ' · 적용' : ' · ' + theme.cost + ' 몽록');
+    button.addEventListener('click', () => {
+      updateCollection(selectTheme(collection, theme.id));
+      renderCollection();
+      get('collection-close').focus();
+    });
+    return button;
+  }));
+}
+
+get('open-collection').addEventListener('click', () => {
+  clearInputs();
+  elapsed = 0;
+  renderCollection();
+  collectionDialog.showModal();
+  get('collection-close').focus();
+});
+get('collection-close').addEventListener('click', () => collectionDialog.close());
+collectionDialog.addEventListener('close', () => {
+  elapsed = 0;
+  last = null;
+  get('open-collection').focus();
+});
+
+const roomButtons = ROOMS.map((room, index) => {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'room-button';
+  button.textContent = String(index + 1);
+  button.addEventListener('click', () => openMode(index));
+  get('room-steps').append(button);
+  return button;
+});
+
+function syncRoomControls() {
+  const training = roomIndex !== null;
+  get('mode-endless').setAttribute('aria-pressed', String(!training));
+  get('mode-rooms').setAttribute('aria-pressed', String(training));
+  updateText('mode-label', training ? '기억의 방' : '무한 꿈');
+  get('room-info').hidden = !training;
+  get('drop-timer').hidden = training;
+  if (!training) return;
+  const room = ROOMS[roomIndex];
+  updateText('room-name', (roomIndex + 1) + '. ' + room.name + (roomIndex >= 5 ? ' · 기울기 심화' : ''));
+  updateText('room-hint', room.instruction);
+  for (const [index, button] of roomButtons.entries()) {
+    const complete = index < roomsCompleted;
+    button.disabled = index > roomsCompleted;
+    button.dataset.complete = String(complete);
+    button.setAttribute('aria-current', index === roomIndex ? 'step' : 'false');
+    button.setAttribute('aria-label', (index + 1) + '. ' + ROOMS[index].name +
+      (complete ? ' · 완료' : button.disabled ? ' · 잠김' : ''));
+  }
+}
+
+function openMode(index) {
+  roomIndex = index;
+  started = true;
+  void confirmSound();
+  restart();
+  board.focus({ preventScroll: true });
+}
+
+function completeRoom() {
+  roomCleared = true;
+  clearInputs();
+  if (roomIndex === roomsCompleted) {
+    roomsCompleted++;
+    try { localStorage.setItem(roomsKey, String(roomsCompleted)); } catch { /* Keep the current session usable. */ }
+  }
+  syncRoomControls();
+  get('pause').disabled = true;
+  const finalRoom = roomIndex === ROOMS.length - 1;
+  setOverlay(finalRoom ? '기억의 방 완료' : '방 완료',
+    finalRoom ? '배운 조작으로 무한 꿈에 도전해 보세요.' : ROOMS[roomIndex].name + ' 연습을 마쳤어요.',
+    finalRoom ? '무한 꿈 시작' : '다음 방');
+}
+
+get('mode-endless').addEventListener('click', () => {
+  if (roomIndex !== null || !started) openMode(null);
+});
+get('mode-rooms').addEventListener('click', () => {
+  if (roomIndex === null) openMode(roomsCompleted === ROOMS.length ? 0 : roomsCompleted);
+});
+get('room-restart').addEventListener('click', () => openMode(roomIndex));
+
+get('pause').addEventListener('click', togglePause);
+get('continue').addEventListener('click', () => {
+  if (roomCleared) {
+    openMode(roomIndex + 1 < ROOMS.length ? roomIndex + 1 : null);
+    return;
+  }
+  if (!started || state.phase === 'ended') void confirmSound();
+  else if (soundOn) void resumeAudio();
+  if (!started || state.phase === 'ended') {
+    started = true;
+    restart();
+  } else togglePause();
+  board.focus({ preventScroll: true });
+});
+function syncSoundButton() {
+  const supported = Boolean(AudioContextClass || MediaAudio);
+  get('sound').disabled = !supported;
+  get('sound').setAttribute('aria-pressed', String(supported && soundOn && !soundNeedsRetry));
+  let label = soundOn ? '소리 끄기' : '소리 켜기';
+  if (!supported) label = '소리 미지원';
+  else if (soundOn && soundNeedsRetry) label = '소리 다시 시도';
+  updateText('sound-label', label);
+}
+
+get('sound').addEventListener('click', () => {
+  soundOn = soundNeedsRetry || !soundOn;
+  soundNeedsRetry = false;
+  try { localStorage.setItem(soundPreference, soundOn ? 'on' : 'off'); } catch { /* Storage is optional. */ }
+  if (soundOn) void confirmSound();
+  else {
+    if (audioOutput) audioOutput.gain.value = 0;
+    if (mediaAudio) mediaAudio.pause();
+  }
+  syncSoundButton();
+});
+
+syncSoundButton();
+buildShardGuide();
+started = preset === 'dawn' || preset === 'overflow';
+restart();
+if (!started) {
+  get('overlay').hidden = false;
+}
+get('continue').disabled = false;
+get('load-error').hidden = true;
+requestAnimationFrame(frame);
+if (preset || query.has('debug')) {
+  window.dreamJarDebug = {
+    snapshot: () => ({ phase: state.phase, tick: state.tick, angle: state.angle, score: state.score, dawns: state.dawns, drops: state.drops, pressure: [...state.lanePressure], dangerLine: state.dangerLine, dropTicks: state.dropTicks, dropAim: state.dropAim, roomIndex, roomCleared, roomsCompleted, paused }),
+    events: () => log.map(event => ({ ...event })),
+  };
+}
+
+})();
+</script>
+</body>
+</html>

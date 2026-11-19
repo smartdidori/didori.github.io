@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1538"/>
+      <stop offset="50%" stop-color="#2a1b4e"/>
+      <stop offset="100%" stop-color="#140f28"/>
+    </linearGradient>
+    <linearGradient id="jarGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c4b5fd" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.05"/>
+    </linearGradient>
+    <linearGradient id="jarBorder" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ddd6fe"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    
+    <!-- Shard Gradients -->
+    <radialGradient id="shardViolet" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#f5d0fe"/>
+      <stop offset="50%" stop-color="#c084fc"/>
+      <stop offset="100%" stop-color="#7e22ce"/>
+    </radialGradient>
+    <radialGradient id="shardMint" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#a7f3d0"/>
+      <stop offset="50%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </radialGradient>
+    <radialGradient id="shardPeach" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#fed7aa"/>
+      <stop offset="50%" stop-color="#fb923c"/>
+      <stop offset="100%" stop-color="#c2410c"/>
+    </radialGradient>
+    <radialGradient id="shardDawn" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#fffbeb"/>
+      <stop offset="40%" stop-color="#fde047"/>
+      <stop offset="100%" stop-color="#eab308"/>
+    </radialGradient>
+
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="450" fill="url(#bgGrad)"/>
+
+  <!-- Decorative Stars & Sparkles -->
+  <g fill="#e9d5ff" opacity="0.6">
+    <circle cx="120" cy="80" r="1.5"/>
+    <circle cx="240" cy="140" r="2"/>
+    <circle cx="180" cy="220" r="1"/>
+    <circle cx="320" cy="70" r="2.5"/>
+    <circle cx="680" cy="90" r="1.5"/>
+    <circle cx="720" cy="240" r="2"/>
+    <circle cx="620" cy="380" r="1.5"/>
+    <circle cx="100" cy="350" r="2"/>
+  </g>
+
+  <!-- Big Glow behind Jar -->
+  <circle cx="560" cy="240" r="180" fill="#8b5cf6" opacity="0.15" filter="url(#glow)"/>
+  <circle cx="560" cy="260" r="120" fill="#ec4899" opacity="0.1" filter="url(#glow)"/>
+
+  <!-- Dream Jar (항아리 외형) -->
+  <g filter="url(#softShadow)">
+    <!-- Jar Lip / Rim -->
+    <ellipse cx="560" cy="115" rx="90" ry="16" fill="#3b2d54" stroke="url(#jarBorder)" stroke-width="3"/>
+    <ellipse cx="560" cy="115" rx="76" ry="11" fill="#1e1538"/>
+
+    <!-- Jar Body Glass -->
+    <path d="M 470 120 
+             C 450 170, 420 220, 420 290 
+             C 420 375, 480 395, 560 395 
+             C 640 395, 700 375, 700 290 
+             C 700 220, 670 170, 650 120 Z" 
+          fill="url(#jarGlow)" stroke="url(#jarBorder)" stroke-width="3"/>
+
+    <!-- Shards Inside the Jar -->
+    <!-- Large Dawn Shard -->
+    <circle cx="560" cy="320" r="46" fill="url(#shardDawn)" filter="url(#glow)"/>
+    <circle cx="546" cy="306" r="8" fill="#ffffff" opacity="0.6"/>
+
+    <!-- Peach Shard -->
+    <circle cx="495" cy="275" r="32" fill="url(#shardPeach)"/>
+    <circle cx="486" cy="266" r="5" fill="#ffffff" opacity="0.5"/>
+
+    <!-- Mint Shard -->
+    <circle cx="625" cy="285" r="28" fill="url(#shardMint)"/>
+    <circle cx="618" cy="277" r="4.5" fill="#ffffff" opacity="0.5"/>
+
+    <!-- Violet Shards -->
+    <circle cx="530" cy="230" r="22" fill="url(#shardViolet)"/>
+    <circle cx="585" cy="225" r="18" fill="url(#shardMint)"/>
+
+    <!-- Dropping Shard with Guide Ring -->
+    <g transform="translate(560, 160)">
+      <circle cx="0" cy="0" r="16" fill="none" stroke="#e9d5ff" stroke-width="2" stroke-dasharray="4 3" opacity="0.8"/>
+      <circle cx="0" cy="0" r="14" fill="url(#shardViolet)"/>
+      <circle cx="-4" cy="-4" r="3" fill="#ffffff" opacity="0.6"/>
+    </g>
+
+    <!-- Glass Reflections -->
+    <path d="M 445 220 C 438 260, 442 320, 465 360" stroke="#ffffff" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.25"/>
+    <path d="M 675 220 C 682 260, 678 320, 655 360" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.15"/>
+  </g>
+
+  <!-- Left Side: Title & Badges -->
+  <g transform="translate(70, 95)">
+    <!-- Beta Badge -->
+    <g transform="translate(0, 0)">
+      <rect width="130" height="32" rx="16" fill="rgba(234, 88, 12, 0.25)" stroke="#ea580c" stroke-width="1.5"/>
+      <circle cx="18" cy="16" r="4" fill="#fb923c"/>
+      <text x="32" y="21" font-family="'Pretendard', sans-serif" font-size="12" font-weight="800" fill="#fdba74" letter-spacing="1">BETA v0.1</text>
+    </g>
+
+    <g transform="translate(142, 0)">
+      <rect width="140" height="32" rx="16" fill="rgba(139, 92, 246, 0.25)" stroke="#a78bfa" stroke-width="1.5"/>
+      <text x="70" y="21" font-family="'Pretendard', sans-serif" font-size="12" font-weight="700" fill="#ddd6fe" text-anchor="middle" letter-spacing="1">PHYSICS MERGE</text>
+    </g>
+
+    <!-- Sparkle Crest -->
+    <text x="0" y="105" font-family="'Pretendard', sans-serif" font-size="52" font-weight="900" fill="#f5f3ff" letter-spacing="-1.5">
+      꿈항아리
+    </text>
+    <text x="210" y="80" font-family="'Pretendard', sans-serif" font-size="28" fill="#c084fc">✦</text>
+
+    <text x="0" y="150" font-family="'Pretendard', sans-serif" font-size="20" font-weight="600" fill="#c4b5fd" letter-spacing="-0.5">
+      몽환적인 물리 머지 퍼즐
+    </text>
+
+    <text x="0" y="195" font-family="'Pretendard', sans-serif" font-size="15" font-weight="400" fill="#94a3b8" line-height="1.6">
+      <tspan x="0" dy="0">꿈 파편을 떨어뜨리고 항아리를 기울여</tspan>
+      <tspan x="0" dy="24">같은 파편을 합쳐 눈부신 새벽빛을 완성하세요!</tspan>
+    </text>
+
+    <!-- Features Pill -->
+    <g transform="translate(0, 255)">
+      <rect width="320" height="34" rx="8" fill="rgba(255, 255, 255, 0.05)" stroke="rgba(255, 255, 255, 0.1)"/>
+      <text x="16" y="22" font-family="'Pretendard', sans-serif" font-size="12" font-weight="500" fill="#cbd5e1">
+        ✦ 무한 꿈 모드  ·  기억의 방  ·  수집함 도감
+      </text>
+    </g>
+  </g>
+
+  <!-- Bottom Line Strip -->
+  <rect x="0" y="442" width="800" height="8" fill="url(#jarBorder)"/>
+</svg>

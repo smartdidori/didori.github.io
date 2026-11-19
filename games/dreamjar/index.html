@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7f5ff">
+<title>꿈항아리 · 무한 꿈</title>
+<link rel="stylesheet" href="./style.css">
+<script id="local-entry">
+  if (location.protocol === 'file:') {
+    location.replace('./dist/dreamjar.html' + location.search + location.hash);
+  }
+</script>
+<script type="module" src="./src/main.mjs"></script>
+</head>
+<body>
+<noscript><p class="boot-note">게임을 플레이하려면 이 페이지의 JavaScript를 허용해 주세요.</p></noscript>
+<main class="shell">
+  <header class="heading">
+    <div class="brand"><span class="crest" aria-hidden="true">✦</span><div><h1>꿈항아리</h1><p id="mode-label">무한 꿈</p></div></div>
+    <div class="actions">
+      <a href="../../index.html" class="home-link" style="text-decoration:none; color:inherit; font-size:13px; font-weight:600; padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,0.85); display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px #563c8f10;" title="게임 목록으로 돌아가기">🏠 홈</a>
+      <button id="sound" type="button" aria-pressed="true"><span aria-hidden="true">♫</span><span id="sound-label">소리 끄기</span></button>
+      <button id="pause" type="button" disabled><span aria-hidden="true">Ⅱ</span><span id="pause-label">일시정지</span></button>
+    </div>
+  </header>
+  <section class="arena" aria-label="꿈항아리 플레이">
+    <div class="mode-picker" role="group" aria-label="게임 모드 선택">
+      <button id="mode-endless" type="button" aria-pressed="true">무한 꿈</button>
+      <button id="mode-rooms" type="button" aria-pressed="false">기억의 방</button>
+      <button id="open-collection" type="button" aria-haspopup="dialog">수집함 <span id="collection-balance">0</span><span class="collection-unit"> 몽록</span></button>
+    </div>
+    <section id="room-info" class="room-info" aria-label="기억의 방 목표" hidden>
+      <div class="room-header"><strong id="room-name"></strong><button id="room-restart" type="button">이 방 다시 시작</button></div>
+      <div class="room-steps" id="room-steps" role="group" aria-label="연습방 선택"></div>
+      <p id="room-hint"></p>
+    </section>
+    <div class="stats">
+      <div><span class="stat-icon violet" aria-hidden="true">✧</span><div><span>점수</span><strong id="score">0</strong></div></div>
+      <div><span class="stat-icon peach" aria-hidden="true">♛</span><div><span>최고 기록</span><strong id="best">0</strong></div></div>
+      <div><span class="stat-icon mint" aria-hidden="true">☀</span><div><span>새벽</span><strong id="dawns">0</strong></div></div>
+    </div>
+    <div class="board-wrap">
+      <div class="board-bar">
+        <div class="queue" id="drop-queue">
+          <div><span class="shard-chip" id="current-icon" aria-hidden="true"></span><span>현재 <strong id="current"></strong></span></div>
+          <div><span class="shard-chip" id="next-icon" aria-hidden="true"></span><span>다음 <strong id="next"></strong></span></div>
+        </div>
+        <div id="drop-timer" class="drop-timer" aria-label="투하 제한 시간"><span>투하까지</span><strong id="drop-seconds">—</strong></div>
+        <p id="status" class="status" role="status"></p>
+      </div>
+      <div class="lanes" role="group" aria-label="투하 구역 혼잡도">
+        <span id="lane-0" class="lane"><span>왼쪽</span><meter min="0" max="4" value="0" aria-label="왼쪽 혼잡도"></meter><span class="locked-label" hidden>잠김</span></span>
+        <span id="lane-1" class="lane"><span>가운데</span><meter min="0" max="4" value="0" aria-label="가운데 혼잡도"></meter><span class="locked-label" hidden>잠김</span></span>
+        <span id="lane-2" class="lane"><span>오른쪽</span><meter min="0" max="4" value="0" aria-label="오른쪽 혼잡도"></meter><span class="locked-label" hidden>잠김</span></span>
+      </div>
+      <canvas id="board" width="360" height="446" tabindex="0" aria-label="꿈항아리 게임 보드" aria-describedby="controls"></canvas>
+      <div id="overlay" class="overlay">
+        <div class="card">
+          <span class="start-icon" aria-hidden="true">☼</span>
+          <h2 id="overlay-title">무한 꿈</h2>
+          <p id="overlay-detail">같은 파편을 합쳐 새벽빛을 만드세요.</p>
+          <button type="button" id="continue" disabled>게임 시작 <span aria-hidden="true">→</span></button>
+          <p id="load-error" role="alert" hidden>압축을 푼 뒤 dist/dreamjar.html을 Chrome에서 열어 주세요.</p>
+        </div>
+      </div>
+    </div>
+    <div class="tilt" id="tilt-controls" role="group" aria-label="항아리 기울이기">
+      <button class="tilt-arrow" id="tilt-left" type="button" aria-label="왼쪽으로 기울이기"><span aria-hidden="true">←</span><kbd aria-hidden="true">A</kbd></button>
+      <div id="tilt" class="tilt-readout">
+        <span class="tilt-hint">좌우 드래그로 기울이기</span>
+        <strong>중력 <span id="gravity-direction">↓ 아래</span></strong>
+      </div>
+      <button class="tilt-arrow" id="tilt-right" type="button" aria-label="오른쪽으로 기울이기"><span aria-hidden="true">→</span><kbd aria-hidden="true">D</kbd></button>
+    </div>
+  </section>
+  <aside class="help" id="controls">
+    <section class="guide">
+      <h2>플레이 방법</h2>
+      <dl>
+        <div><span class="guide-icon violet" aria-hidden="true">↓</span><div><dt>파편 놓기</dt><dd>보드에서 위치를 잡고 손을 떼세요. 시간이 끝나면 원이 표시된 곳에 자동으로 떨어집니다.</dd><dd class="keys">← → 이동 · Space 투하</dd></div></div>
+        <div><span class="guide-icon mint" aria-hidden="true">↔</span><div><dt>항아리 기울이기</dt><dd>좌우 버튼을 누르거나 하단 바를 드래그하세요. 손을 떼면 중력이 다시 아래로 향합니다.</dd><dd class="keys">A 왼쪽 · D 오른쪽</dd></div></div>
+        <div><span class="guide-icon peach" aria-hidden="true">▥</span><div><dt>투하 구역 나누기</dt><dd>한 구역이 가득 차면 다른 구역에 놓아 다시 여세요.</dd></div></div>
+      </dl>
+      <p class="limit">파편이 입구선 위에 3초간 쌓이면 게임이 끝납니다.</p>
+    </section>
+    <section class="guide collection">
+      <h2>파편 성장 순서</h2>
+      <ol id="shard-guide" aria-label="8단계 파편 순서"></ol>
+    </section>
+  </aside>
+</main>
+<dialog id="collection-dialog" class="collection-dialog" aria-labelledby="collection-title">
+  <header><div><h2 id="collection-title">수집함</h2><p id="collection-total"></p></div><button id="collection-close" type="button" autofocus>닫기</button></header>
+  <p id="collection-save-warning" role="status" hidden>지금은 진행을 브라우저에 저장할 수 없습니다.</p>
+  <section aria-labelledby="discovery-title">
+    <h3 id="discovery-title">파편 도감 <span id="discovery-total"></span></h3>
+    <ul class="discovery-list" id="discovery-list"></ul>
+  </section>
+  <section aria-labelledby="theme-title">
+    <h3 id="theme-title">항아리 테마</h3>
+    <p>무한 꿈에서 합체하면 1몽록, 새벽을 열면 20몽록을 얻습니다.</p>
+    <div class="theme-list" id="theme-list"></div>
+  </section>
+  <section aria-labelledby="letter-title">
+    <h3 id="letter-title">새벽 편지 <span id="letter-total"></span></h3>
+    <ol class="letter-list" id="letter-list"></ol>
+  </section>
+</dialog>
+<script id="boot-watch">
+  window.addEventListener('load', () => {
+    if (document.getElementById('continue').disabled) {
+      document.getElementById('load-error').hidden = false;
+    }
+  });
+</script>
+</body>
+</html>
