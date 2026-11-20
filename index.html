@@ -361,6 +361,27 @@
       gap: 1.5rem;
       margin-bottom: 1rem;
     }
+
+    .copyright-notice {
+      color: #94a3b8;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      margin-bottom: 0.35rem;
+    }
+
+    .copyright-warning {
+      color: #cbd5e1;
+      font-size: 0.825rem;
+      font-weight: 500;
+      margin-top: 0.35rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      padding: 0.4rem 0.85rem;
+      border-radius: 8px;
+    }
   </style>
 </head>
 <body>
@@ -379,7 +400,7 @@
       <span>•</span>
       <span>플랫폼: <strong>Web / Mobile</strong></span>
       <span>•</span>
-      <span>지속 업데이트 예정</span>
+      <span>🔒 무단 상업적 사용 금지</span>
     </div>
   </header>
 
@@ -520,9 +541,12 @@
   <footer>
     <div class="footer-links">
       <a href="https://github.com/smartdidori" target="_blank">GitHub Profile</a>
-      <a href="https://github.com/smartdidori/didori.github.io" target="_blank">GitHub Repository</a>
+      <a href="https://github.com/smartdidori/smartdidori.github.io" target="_blank">GitHub Repository</a>
     </div>
-    <p>&copy; 2026 Didori. All rights reserved. Created with Antigravity.</p>
+    <p class="copyright-notice">&copy; 2026 Didori. All rights reserved.</p>
+    <div style="margin-top: 0.5rem;">
+      <p class="copyright-warning">⚠️ 본 사이트 및 수록된 모든 게임의 <strong>무단 상업적 사용 및 영리 목적의 도용을 금지합니다.</strong> (비상업적 개인 플레이 가능)</p>
+    </div>
   </footer>
 
 </body>

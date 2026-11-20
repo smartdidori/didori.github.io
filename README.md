@@ -104,8 +104,11 @@ smartdidori.github.io/
 
 ---
 
-## 👨‍💻 Developer
+## 👨‍💻 Developer & License
 - **GitHub:** [@smartdidori](https://github.com/smartdidori)
 - **Repository:** [smartdidori/smartdidori.github.io](https://github.com/smartdidori/smartdidori.github.io)
 
-&copy; 2026 Didori. Powered by GitHub Pages.
+---
+
+&copy; 2026 Didori. All rights reserved.  
+⚠️ **본 저장소 및 사이트에 게시된 모든 게임의 소스 코드, 콘텐츠, 에셋에 대한 무단 상업적 사용 및 영리 목적의 도용을 금지합니다.** (비상업적 개인 이용 가능)
